@@ -25,16 +25,16 @@
 
 ## 2. Alcance
 
-### Dentro del alcance (MVP entregable)
-- Una pantalla: **Caja / Venta en curso**.
-- Catálogo de productos ficticio (código, nombre, precio), servido por **MSW** imitando el contrato del backend.
-- Gestión completa de una venta en el cliente: añadir, sumar, modificar, eliminar, total, finalizar.
-- Tests unitarios, de integración (MSW) y E2E (Playwright) de los flujos críticos.
+### Dentro del alcance (entrega completa y desplegada)
+- **Login de cajero** (JWT contra la API Java) y cierre de sesión.
+- **Caja / venta en curso** conectada al backend: el servidor es la fuente de verdad de precios y totales; la UI responde al instante con actualizaciones optimistas.
+- Recuperar la venta abierta tras recargar la página o volver a iniciar sesión.
+- Catálogo de productos ficticio (código, nombre, precio) servido por el backend (el mismo catálogo existe en los mocks MSW para tests).
+- Entornos `local`, `docker`, `dev` y `prod` (Vercel), con CI.
+- Tests unitarios, de integración (MSW) y E2E (Playwright, contra mocks y contra el back real).
 
 ### Fuera del alcance (YAGNI → `07-roadmap.md` "Futuro")
-Cobro y medios de pago, impresión de ticket, impuestos desglosados, descuentos/promociones, login real, multi-caja, modo offline, devoluciones, i18n.
-
-> **Preparado pero no obligatorio:** la capa `services/` sigue el contrato real del backend, así que conectar la API Java es cambiar `VITE_API_URL` y desactivar MSW.
+Cobro y medios de pago, impresión de ticket, impuestos desglosados, descuentos/promociones, gestión de usuarios y catálogo, multi-caja, modo offline, devoluciones, i18n.
 
 ---
 
@@ -56,6 +56,11 @@ Cobro y medios de pago, impresión de ticket, impuestos desglosados, descuentos/
 | RF-12 | **Multiplicador** `N*código` (p. ej. `6*8410001`) | Práctica real TPV | Could |
 | RF-13 | **Vaciar / cancelar** venta con confirmación | Criterio UX | Could |
 | RF-14 | Contador de **nº de artículos** junto al total | Criterio UX | Should |
+| RF-15 | **Iniciar sesión** con email y contraseña | Realismo (TPV) | Must |
+| RF-16 | Mostrar el **cajero** conectado y **cerrar sesión** | Realismo (TPV) | Must |
+| RF-17 | **Renovar la sesión** sin interrumpir al cajero; si caduca, volver al login con aviso | Realismo | Must |
+| RF-18 | **Recuperar la venta abierta** al recargar o volver a entrar | Prevención de errores | Must |
+| RF-19 | Indicar **"Conectando con el servidor…"** durante el arranque en frío del back | Resiliencia | Should |
 
 ## 4. Requisitos no funcionales (RNF)
 

@@ -1,6 +1,6 @@
 # 05 · Estrategia de testing (Frontend)
 
-Mismo enfoque que task-manager-client: Vitest con **dos proyectos** (`unit` e `integration`), RTL, MSW, patrón **AAA** y cobertura ≥ 80 %. E2E con **Playwright** (en lugar de Cypress).
+Mismo enfoque que task-manager-client: Vitest con **dos proyectos** (`unit` e `integration`), RTL, MSW, patrón **AAA** y cobertura ≥ 80 %. E2E con **Playwright** (en lugar de Cypress), contra mocks y contra el back real.
 
 ## 1. Pirámide
 
@@ -71,32 +71,52 @@ beforeEach(() => useSaleStore.setState(initialSaleState));
 
 ## 4. Integración con MSW (`screen/index.integration.test.tsx`, proyecto `integration`)
 
-Se renderiza `CheckoutScreen` dentro de `AppProviders` (QueryClient con `retry: false` + Toaster) con el **store real**. La red la responde MSW (`shared/mocks/server` con los handlers de `features/*/mocks/handlers`).
+Se renderiza la screen dentro de `AppProviders` (QueryClient con `retry: false`, Toaster, `MemoryRouter`) con el **store real** y los **interceptores reales**. MSW responde con handlers por feature:
+- `auth/mocks/handlers`: `/auth/login` (200 o 401 según credenciales), `/auth/refresh`, `/users/me`.
+- `catalog/mocks/handlers`: `/products/:code` (200/404/400).
+- `checkout/mocks/handlers`: `/sales*` con una **venta en memoria** (se reinicia en `afterEach`) que aplica las mismas reglas que el back.
 
+### Login (`auth/screen/index.integration.test.tsx`)
+| # | Escenario | Esperado |
+|---|---|---|
+| L-01 | Credenciales válidas | Tokens en storage y navegación a `/` |
+| L-02 | 401 | `role="alert"` "Email o contraseña incorrectos" |
+| L-03 | Campos vacíos | Errores de Zod vinculados a cada input |
+
+### Caja (`checkout/screen/index.integration.test.tsx`)
 | # | Escenario | Handler | Esperado |
 |---|---|---|---|
-| I-01 | Escanear código existente | 200 | Fila con nombre, cantidad 1, precio, importe; total actualizado; input vacío **y con foco** |
-| I-02 | Escanear dos veces el mismo | 200 | Una fila con cantidad 2; **una** sola petición (caché TanStack Query) |
-| I-03 | Código inexistente | 404 | `role="alert"` "No existe ningún producto con el código…"; venta intacta |
-| I-04 | Error de servidor | 500 (`server.use`) | Mensaje de error de red; distinto de I-03 |
-| I-05 | Red caída | `HttpResponse.error()` | Igual que I-04 |
-| I-06 | Modificar cantidad y eliminar + deshacer | 200 | Total recalculado; la línea vuelve |
-| I-07 | Finalizar venta | 200 | Modal → confirmar → éxito → venta vacía |
-| I-08 | Multiplicador `3*código` | 200 | Cantidad 3 |
-| I-09 | Anuncios | 200 | La región `aria-live` contiene "Leche entera 1L añadido" |
+| I-01 | Carga sin venta abierta | current 404 → POST 201 | Venta vacía, input con foco |
+| I-02 | Carga con venta abierta | current 200 | Se pintan sus líneas |
+| I-03 | Escanear código existente | 200 | Fila, total, input vacío y con foco |
+| I-04 | Escanear dos veces el mismo | 200 | Una fila con cantidad 2; un solo `GET /products` (caché) |
+| I-05 | Código inexistente | 404 | `role="alert"` inline; venta intacta |
+| I-06 | Fallo al añadir línea | `POST lines` 500 (`server.use`) | Rollback: la línea optimista desaparece + mensaje |
+| I-07 | Red caída | `HttpResponse.error()` | Igual que I-06 |
+| I-08 | Cantidad, eliminar y deshacer | 200 | Total recalculado; la línea vuelve |
+| I-09 | Finalizar | 200 | Modal → éxito → venta nueva vacía |
+| I-10 | Vaciar | cancel 204 → POST 201 | Venta nueva vacía |
+| I-11 | Token caducado | primer 401 → refresh 200 → reintento 200 | La acción se completa sin que el cajero lo note |
+| I-12 | Anuncios | 200 | La región `aria-live` contiene "Leche entera 1L añadido" |
 
 ## 5. E2E con Playwright (`e2e/`) — solo flujos importantes
 
-La app se levanta con `pnpm local` y `VITE_USE_MOCKS=true` (MSW worker) → E2E deterministas sin backend. Un proyecto opcional `with-backend` apunta a la API Java.
+Dos proyectos en `playwright.config.ts`:
+| Proyecto | App | API | Cuándo |
+|---|---|---|---|
+| `mocked` | `pnpm local:mock` (MSW worker) | MSW | Siempre (local y CI); determinista |
+| `full-stack` | `pnpm local` | API real en Docker (PostgreSQL + imagen del back) | CI y antes de cada release (como el Cypress de task-manager) |
 
-| Spec | Flujo |
-|---|---|
-| `checkout-happy-path` | Escanear 3 productos (uno repetido) → total → F12 → confirmar → venta nueva vacía |
-| `checkout-unknown-code` | Código inexistente → mensaje → corregir → producto añadido |
-| `checkout-remove-undo` | Añadir → eliminar → Deshacer → la línea vuelve con su cantidad |
-| `checkout-keyboard-a11y` | Todo el flujo **sin ratón** (↑↓, +/−, Supr, F12, Enter/Esc) + `AxeBuilder` sin violaciones `serious`/`critical` en cada estado |
+| Spec | Flujo | mocked | full-stack |
+|---|---|---|---|
+| `login` | Login correcto e incorrecto | ✅ | ✅ |
+| `checkout-happy-path` | Login → escanear 3 productos (uno repetido) → total → F12 → confirmar → venta nueva | ✅ | ✅ |
+| `checkout-unknown-code` | Código inexistente → mensaje → corregir → añadido | ✅ | ✅ |
+| `checkout-remove-undo` | Añadir → eliminar → Deshacer | ✅ | — |
+| `checkout-recover-sale` | Añadir productos → recargar → la venta sigue ahí | — | ✅ |
+| `checkout-keyboard-a11y` | Todo sin ratón + `AxeBuilder` sin violaciones `serious`/`critical` | ✅ | — |
 
-`playwright.config.ts`: Chromium (+ WebKit opcional), `webServer` con `pnpm local`, viewport 1366×768, `trace: 'on-first-retry'`.
+Configuración: Chromium (+ WebKit opcional), viewport 1366×768, `trace: 'on-first-retry'`, credenciales demo por variables de entorno.
 
 ## 6. Configuración
 
@@ -110,7 +130,8 @@ La app se levanta con `pnpm local` y `VITE_USE_MOCKS=true` (MSW worker) → E2E 
 "test:unit":        "vitest run --project unit --coverage",
 "test:integration": "vitest run --project integration",
 "test:coverage":    "vitest run --coverage",
-"e2e":              "playwright test",
+"e2e":              "playwright test --project=mocked",
+"e2e:full-stack":   "playwright test --project=full-stack",
 "e2e:ui":           "playwright test --ui"
 ```
 

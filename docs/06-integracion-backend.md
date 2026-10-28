@@ -1,67 +1,66 @@
 # 06 · Integración con el backend Java
 
-> Parte 3 de la prueba ("cómo integrarías el frontend con un backend Java"). El servidor está documentado en `prueba-tecnica-classora-be/docs/`. Aquí solo lo que **afecta al front**.
+> Responde a la Parte 3 de la prueba **con un sistema real**: el front consume la API Spring Boot (`prueba-tecnica-classora-be`) en local, docker, dev y prod. Contratos completos en `prueba-tecnica-classora-be/docs/04-api.md`.
 
-## 1. Contrato consumido
+## 1. Endpoints consumidos
 
-Base URL: `environment.apiUrl` → `http://localhost:8080/api/v1`
-
-| Uso en el front | Endpoint | Fase |
+| Uso en el front | Endpoint | Dónde |
 |---|---|---|
-| Buscar producto al escanear | `GET /products/{code}` | 1 (MSW) y 2 |
-| Abrir venta | `POST /sales` | 2 |
-| Consultar venta | `GET /sales/{id}` | 2 |
-| Añadir producto / sumar | `POST /sales/{id}/lines` `{ code, quantity }` | 2 |
-| Cambiar cantidad | `PATCH /sales/{id}/lines/{lineId}` `{ quantity }` | 2 |
-| Eliminar línea | `DELETE /sales/{id}/lines/{lineId}` | 2 |
-| Finalizar | `PATCH /sales/{id}/complete` | 2 |
+| Iniciar sesión | `POST /auth/login` | `auth/services` → `loginSvc` |
+| Renovar token | `POST /auth/refresh` | `core/interceptors/jwt` → `refreshSvc` |
+| Cajero en cabecera | `GET /users/me` | `shared/hooks/use-me` |
+| Buscar producto | `GET /products/{code}` | `catalog/services` → `getProductByCodeSvc` |
+| Recuperar venta abierta | `GET /sales/current` | `checkout/hooks/use-current-sale` |
+| Abrir venta | `POST /sales` | ídem |
+| Escanear | `POST /sales/{id}/lines` | `use-sale-mutations` |
+| Cambiar cantidad | `PATCH /sales/{id}/lines/{lineId}` | ídem |
+| Eliminar línea | `DELETE /sales/{id}/lines/{lineId}` | ídem |
+| Finalizar | `PATCH /sales/{id}/complete` | ídem |
+| Vaciar | `PATCH /sales/{id}/cancel` + `POST /sales` | ídem |
 
-"Vaciar venta" en fase 2 = abrir una venta nueva (la anterior queda `OPEN` sin uso; ver roadmap del back).
+## 2. Errores
 
-## 2. Formato de error (único para toda la API, estilo task-manager)
-
+Formato único (`ErrorResponseDTO`):
 ```json
-{
-  "timestamp": "2026-10-28T14:32:15Z",
-  "status": 404,
-  "error": "Not Found",
-  "message": "Product not found.",
-  "errors": []
-}
+{ "timestamp": "…", "status": 404, "error": "Not Found", "message": "Product not found.", "errors": [] }
 ```
-`core/interceptors/errors` lo convierte en `ApiError { status, message, fieldErrors }` (`core/errors/api-error`).
+`core/interceptors/errors` → `ApiError { status, message, fieldErrors }`.
 
-| HTTP | Qué significa para la caja | UI |
+| HTTP | Significado | UI |
 |---|---|---|
-| 400 | Código con formato inválido / body inválido | Mensaje inline "Código no válido" |
-| 404 | Producto / venta / línea inexistente | "No existe ningún producto con el código…" |
-| 409 | La venta ya no está abierta | Aviso + empezar venta nueva |
-| 422 | Regla de dominio (cantidad > 999, venta vacía) | Mensaje inline |
-| 5xx / red / timeout | Fallo técnico | "No se pudo conectar" + Reintentar. **Nunca** se pierde la venta local |
+| 400 | Formato inválido | Mensaje inline |
+| 401 | Token caducado / credenciales | Refresh silencioso una vez; si falla → `/login?expired=1`. En login: "Email o contraseña incorrectos" |
+| 403 | Venta ajena | Toast "No tienes permiso" + recargar venta actual |
+| 404 | Producto inexistente / sin venta abierta | Inline "No existe ningún producto con el código…" / abrir venta nueva |
+| 409 | Venta cerrada o conflicto de versión | Recargar `GET /sales/current` + aviso |
+| 422 | Regla de dominio (cantidad, venta vacía) | Mensaje inline |
+| 429 | Rate limit | "Demasiadas peticiones, espera un momento" |
+| 5xx / red / timeout | Fallo técnico | Rollback + "No se pudo conectar" + Reintentar |
 
 ## 3. Cliente HTTP (patrón task-manager)
-- `core/axios`: `axios.create({ baseURL: environment.apiUrl, timeout: 5000, headers: { 'Content-Type': 'application/json' } })`. Timeout corto: un escaneo no puede colgar la caja.
-- `core/http`: `httpService.get/post/patch/delete<T>()` que desempaqueta `data`.
-- `core/interceptors/errors`: normaliza a `ApiError`. **No** muestra toasts globales (ADR-10).
-- `core/environments`: `environment.apiUrl`, `environment.useMocks`, `environment.envName` desde `.env.localhost` / `.env.dev` / `.env.prod`.
-- Sin autenticación (el backend no la tiene en esta prueba). Si se añadiera: `core/interceptors/jwt` como en task-manager.
+- `core/axios`: `baseURL = environment.apiUrl`, `timeout: 10000` (cubre el arranque en frío en las peticiones normales), JSON.
+- `core/http`: `httpService` tipado que desempaqueta `data`.
+- `core/interceptors/jwt`: `Authorization: Bearer <TOKEN>`; 401 → refresh único con cola → reintento.
+- `core/interceptors/errors`: normaliza a `ApiError`, sin toasts globales.
 
 ## 4. Dinero
-El back envía `price: 0.95` (BigDecimal, escala 2). El **mapper** lo convierte a `95` céntimos con `Math.round(price * 100)`. El front nunca envía precios: en fase 2 envía **código + cantidad** y el servidor decide el precio (el cliente no puede manipular precios).
+El back envía decimales (`0.95`); los mappers los pasan a céntimos (`Math.round(x * 100)`). El front **nunca** envía precios: solo código y cantidad.
 
-## 5. Fase 2: venta en servidor con UI optimista
-1. El cajero escanea → `useSaleStore` añade la línea al instante (feedback < 100 ms).
-2. En paralelo `POST /sales/{id}/lines` (mutation de TanStack Query).
-3. OK → se reemplaza la venta del store por el `SaleResponseDto` mapeado (fuente de verdad).
-4. KO → *rollback* al snapshot previo del store + mensaje.
+## 5. Flujo completo de una venta
+1. Login → tokens en storage → `/`.
+2. `use-current-sale`: `GET /sales/current` → 200 (se recupera) o 404 → `POST /sales`.
+3. Escanear: lookup (caché) → `addLine` optimista → reconciliación.
+4. Finalizar: modal → `PATCH complete` → éxito → `POST /sales` (nueva venta).
+5. Cerrar sesión: limpiar storage y caché de TanStack Query → `/login`. La venta abierta queda en el servidor y se recupera en el siguiente login.
 
-Las mutaciones de una venta se **serializan** (cola) para respetar el orden de escaneo.
+## 6. Entornos
 
-## 6. CORS y entornos
-El backend permite `http://localhost:[*]`. Alternativa en desarrollo: *proxy* de Vite (`/api → :8080`).
-
-| Archivo | `VITE_USE_MOCKS` | `VITE_API_URL` |
+| Modo / entorno | `VITE_API_URL` | `VITE_USE_MOCKS` |
 |---|---|---|
-| `.env.localhost` | `true` (por defecto) | `http://localhost:8080/api/v1` |
-| `.env.dev` | `false` | `http://localhost:8080/api/v1` (backend en docker) |
-| `.env.prod` | `true` | — (demo desplegada sin backend) |
+| `pnpm local` (`.env.localhost`) | `http://localhost:8080/api/v1` | `false` |
+| `pnpm local:mock` | — | `true` (MSW: desarrollo sin backend) |
+| Docker (`docker-compose.yml`) | `http://localhost:8080/api/v1` | `false` |
+| Vercel **dev** (rama `dev`) | API Render dev | `false` |
+| Vercel **prod** (rama `main`) | API Render prod | `false` |
+
+CORS: el back permite `http://localhost:[*]` y los dominios de Vercel de cada entorno (`CORS_ALLOWED_ORIGINS`).

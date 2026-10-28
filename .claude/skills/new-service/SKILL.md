@@ -60,7 +60,26 @@ export { getProductByCodeSvc };
 - Sin estado, sin React. TSDoc en cada función.
 
 ## 6. Hook — `hooks/use-xxx/index.ts` (default) — skill `react-tanstack-query`
-`queryKey: ['<recurso>', params]`, `staleTime` justificado, `retry` desactivado para 4xx. Mutations para escrituras.
+- Lecturas: `useQuery`/`fetchQuery` con `queryKey: ['<recurso>', params]`, `staleTime` justificado, sin `retry` en 4xx.
+- Escrituras sobre la venta: `useMutation` **optimista** con `scope: { id: 'sale' }`:
+```ts
+const updateLine = useMutation({
+  scope: { id: 'sale' },
+  mutationFn: ({ lineId, quantity }) => updateLineSvc(saleId, lineId, { quantity }),
+  onMutate: ({ lineId, quantity }) => {
+    const snapshot = useSaleStore.getState().sale;
+    useSaleStore.getState().applyOptimistic((s) => changeLineQuantity(s, lineId, quantity));
+    return { snapshot };
+  },
+  onSuccess: (sale) => useSaleStore.getState().setSale(sale),
+  onError: (error, _vars, ctx) => {
+    useSaleStore.getState().rollback(ctx?.snapshot ?? null);
+    // mostrar error (inline o toast según el caso)
+  },
+});
+```
+- Acciones irreversibles (finalizar, cancelar) **sin** `onMutate`: se espera la respuesta.
+- Autenticación: no se toca en el hook; la pone `core/interceptors/jwt`.
 
 ## 7. Mock MSW — `mocks/handlers/index.ts` (default) y `mocks/data/index.ts` (named)
 ```ts
@@ -74,7 +93,7 @@ const handlersCatalog = [
 ];
 export default handlersCatalog;
 ```
-Los 500/red se fuerzan en cada test con `server.use(...)`.
+Los 500/red se fuerzan en cada test con `server.use(...)`. Si el recurso cambia (venta), el handler mantiene un estado en memoria con las mismas reglas que el back y se reinicia en `afterEach`.
 
 ## 8. Tests
 - Unit happy path del **mapper** y del **servicio** (con el handler MSW por defecto).

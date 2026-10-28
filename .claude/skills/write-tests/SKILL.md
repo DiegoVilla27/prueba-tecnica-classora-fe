@@ -13,7 +13,7 @@ description: Decide y escribe el nivel de test correcto (unit happy path, integr
 | componente o hook | ✅ happy path | — | — |
 | service | ✅ happy path con MSW por defecto | — | — |
 | comportamiento de la screen / errores de red | — | ✅ 200, 404, 500, red caída | — |
-| flujo crítico (escanear→finalizar, código inexistente, eliminar+deshacer, solo teclado) | — | — | ✅ + axe |
+| flujo crítico (login, escanear→finalizar, código inexistente, eliminar+deshacer, recuperar venta, solo teclado) | — | — | ✅ + axe (`mocked` y/o `full-stack`) |
 
 ## Convenciones
 - Archivos: `index.test.ts(x)` junto al código · `index.integration.test.tsx` en la screen · `e2e/<flujo>.spec.ts`.
@@ -25,7 +25,8 @@ description: Decide y escribe el nivel de test correcto (unit happy path, integr
 - `const user = userEvent.setup()`; nunca `fireEvent`.
 - Store: `beforeEach(() => useSaleStore.setState(initialSaleState))`.
 - Unit de hooks: se pueden mockear sus services (`vi.mock('@features/catalog/services', …)`), como en task-manager.
-- Integración: **nunca** mockear Axios ni el store; la red con MSW y overrides con `server.use(...)`.
+- Integración: **nunca** mockear Axios, interceptores ni el store; la red con MSW y overrides con `server.use(...)`. Para pantallas privadas, sembrar tokens en storage en `beforeEach`.
+- Mutaciones optimistas: probar también el **rollback** (handler 500) en integración.
 - E2E: preferir teclado; `new AxeBuilder({ page }).analyze()` sin violaciones `serious`/`critical`.
 
 ## Plantilla integración

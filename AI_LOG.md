@@ -69,3 +69,30 @@ Registro del uso de inteligencia artificial en el frontend. Es el entregable de 
 - **Qué hizo la IA:** Primer commit en `main` (`docs: add project documentation, agent rules and skills`) y push a `origin/main`; después este commit con la entrada del log.
 - **Decisiones / correcciones humanas:** El autor fija Conventional Commits como norma para todos los commits.
 - **Resultado:** Hecho; rama `main` publicada en GitHub.
+
+### #05 · 2026-10-28 16:02 · Ampliar el alcance: front completo, con login y desplegado
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt (resumen):** Entregar todo funcional y realista: front y back, en local con Docker y en dev/prod (Vercel para el front, Render para el back), con autenticación JWT. Ajustar primero los `.md`.
+- **Qué hizo la IA:**
+  - Ajustó el alcance en `01` (login, sesión, recuperar venta, arranque en frío; RF-15…RF-19).
+  - Añadió a `02` los casos de uso de login, cierre de sesión y carga/recuperación de la venta.
+  - Añadió a `03` los frames y textos de login, sesión caducada y "Conectando con el servidor…".
+  - Reescribió `04`: features `auth`/`catalog`/`checkout`, React Router con guards, interceptor JWT con refresh silencioso, venta en servidor con Zustand y mutations optimistas serializadas (`scope`), resiliencia y ADRs.
+  - Reescribió `05`: integración con MSW con estado, y E2E Playwright en dos proyectos (`mocked` y `full-stack`).
+  - Reescribió `06` (flujo completo contra la API) y `07` (roadmap).
+  - Creó `08-despliegue.md` (Docker + nginx, Vercel, CI).
+  - Actualizó `CLAUDE.md` (stack, árbol, §3 estado, git) y las skills.
+- **Decisiones / correcciones humanas:** El autor amplía el alcance a una entrega completa y desplegada con JWT, y decide empezar por el back.
+- **Decisiones de la IA, sujetas a revisión:**
+  - La venta vive en el servidor y Zustand guarda la copia optimista.
+  - Finalizar y vaciar no son optimistas.
+  - Tokens en `localStorage`, como en task-manager (alternativa con cookie `HttpOnly` documentada).
+  - Contenedor con build + nginx en lugar de `vite dev`.
+- **Resultado:** Docs y skills actualizados; sin código; sin commit.
+
+### #06 · 2026-10-28 16:06 · Quitar roles: un único usuario, el cajero
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt (resumen):** Sin roles; el único usuario del sistema es el cajero (decisión que afecta sobre todo al back).
+- **Qué hizo la IA:** Ajustó el actor de `docs/02-casos-de-uso.md` (sin `CASHIER`/`SUPERVISOR`). El resto del front ya trataba al usuario como cajero.
+- **Decisiones / correcciones humanas:** Corrección del autor: el supervisor no estaba en el enunciado.
+- **Resultado:** Doc actualizado; sin commit.

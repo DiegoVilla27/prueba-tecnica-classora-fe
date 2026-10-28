@@ -1,38 +1,53 @@
 # 04 · Arquitectura del Frontend
 
 > Las reglas obligatorias están en [`CLAUDE.md`](../CLAUDE.md). Este documento explica **qué** hay, **por qué** y **cómo encaja**.
-> Base: la forma de trabajo de `task-manager-client` (features, `index` por carpeta, Axios + `httpService`, RHF + Zod, Zustand, Tailwind v4, Vitest unit/integration, MSW).
+> Base: la forma de trabajo de `task-manager-client` (features, `index` por carpeta, Axios + `httpService` + interceptores JWT, React Router con guards, RHF + Zod, Zustand, Tailwind v4, Vitest unit/integration, MSW).
 
 ## 1. Visión general
 
 ```
-                         main.tsx  (interceptores · MSW worker · providers)
-                              │
-          ┌───────────────────┴──────────── features ───────────────────────────┐
-          │  checkout                                 catalog                    │
-          │  ├─ screen/   (UI + hooks de la pantalla)  ├─ services/ (getProductByCodeSvc)
-          │  ├─ store/    (useSaleStore · Zustand)     ├─ hooks/    (use-product-lookup · TanStack Query)
-          │  ├─ models/   (sale, money, quantity…)     ├─ models/   (product)
-          │  └─ constants/ mocks/                      └─ mocks/    (MSW)
-          └───────────────────┬─────────────────────────────────────────────────┘
-                              │
-       shared  (components/ui · hooks · utils/cn · utils/format-money · mocks/server)
-                              │
-       core    (axios · http · interceptors · environments · providers · mocks)
+     main.tsx (interceptores · MSW opcional) → core/router (guards) → core/providers
+                                   │
+     ┌──────────────────────────── features ─────────────────────────────────────┐
+     │  auth                     checkout                          catalog        │
+     │  ├─ screen/ (login)        ├─ screen/ (caja)                 ├─ services/   │
+     │  ├─ services/ (login,      ├─ store/ (useSaleStore)          ├─ hooks/      │
+     │  │   refresh, logout)      ├─ services/ (sales API)          │  (lookup)    │
+     │  └─ hooks/                 ├─ hooks/ (mutations de venta)    └─ models/     │
+     │                            └─ models/ (sale, money…)                        │
+     └──────────────────────────────────┬─────────────────────────────────────────┘
+                                        │
+     shared (components/ui · hooks: use-me, use-hotkeys, use-announcer · utils: cn, format-money, storage)
+                                        │
+     core (axios · http · interceptors errors/jwt · router · environments · providers · mocks)
 ```
 
-### ¿Por qué por features?
-- **Cohesión**: todo lo de "cobrar" está junto; mover o borrar una feature es mover una carpeta.
-- **Escalabilidad**: añadir `auth` o `returns` no toca `checkout`.
-- **Fronteras explícitas**: cada feature expone un `index.ts` público.
+### Features
+| Feature | Responsabilidad | Bounded context del back |
+|---|---|---|
+| `auth` | Login, sesión, logout | `auth` + `user` |
+| `checkout` | La caja: venta en curso y sus acciones | `sale` |
+| `catalog` | Buscar producto por código (con caché) | `product` |
 
-### ¿Por qué `checkout` y `catalog` separados?
-Son *bounded contexts* distintos también en el backend (`product` vs `sale`). El catálogo es de solo lectura para la caja y mañana lo puede usar otra feature (búsqueda manual, inventario).
+### ¿Por qué `index` por carpeta y kebab-case?
+Imports cortos, co-localización (componente + test + hook + schema) y la misma convención que task-manager. Para no perderse entre pestañas `index.tsx`: `.vscode/settings.json` → `"workbench.editor.customLabels.patterns": { "**/index.{ts,tsx}": "${dirname}" }`.
 
-### ¿Por qué `index` por carpeta?
-Imports cortos (`./components/sale-table`), co-localización (componente + test + hook + schema juntos), mover = mover carpeta. *Trade-off*: muchas pestañas `index.tsx` → `.vscode/settings.json` con `"workbench.editor.customLabels.patterns": { "**/index.{ts,tsx}": "${dirname}" }`.
+## 2. Rutas y sesión
 
-## 2. Árbol objetivo
+| Ruta | Guard | Screen |
+|---|---|---|
+| `/login` | `public` (si hay sesión → `/`) | `auth/screen` |
+| `/` | `private` (sin sesión → `/login`) | `checkout/screen` |
+| `*` | — | redirige a `/` |
+
+- Screens cargadas con `React.lazy` (por eso exportan **default**) dentro de `<Suspense>`.
+- Tokens en `shared/utils/storage` (`TOKEN`, `REFRESH`), igual que task-manager.
+- `core/interceptors/jwt`: añade `Bearer`; ante 401 hace **un** `POST /auth/refresh` (las peticiones concurrentes esperan en cola) y reintenta; si falla → limpia sesión y navega a `/login?expired=1`.
+- `shared/hooks/use-me`: `GET /users/me` (TanStack Query) para la cabecera ("Cajero: Ana López").
+
+> ⚠️ Tokens en `localStorage`, como en task-manager: es lo pragmático para una SPA en otro dominio que la API. El riesgo de XSS se mitiga con React (sin `dangerouslySetInnerHTML`) y CSP en Vercel. Alternativa más segura, para la entrevista: refresh token en cookie `HttpOnly` + `SameSite`.
+
+## 3. Árbol objetivo
 
 ```
 src/
@@ -40,207 +55,161 @@ src/
 ├── index.css                                   # @import 'tailwindcss'; @theme { tokens }
 ├── setupTests.ts
 ├── core/
-│   ├── axios/index.ts                          # axiosInstance (baseURL, timeout 5 s, JSON)
+│   ├── axios/index.ts                          # axiosInstance (baseURL, timeout, JSON)
 │   ├── http/index.ts                           # httpService.get/post/patch/delete<T>
-│   ├── interceptors/errors/index.ts            # AxiosError → ApiError {status, message, fieldErrors}
-│   ├── errors/api-error/index.ts               # clase ApiError (+ isApiError)
-│   ├── environments/index.ts                   # environment { apiUrl, useMocks, envName }
+│   ├── interceptors/
+│   │   ├── errors/index.ts                     # AxiosError → ApiError
+│   │   └── jwt/index.ts                        # Bearer + refresh silencioso
+│   ├── errors/api-error/index.ts
+│   ├── router/
+│   │   ├── index.tsx                           # <AppRoutes /> (RouterProvider)
+│   │   ├── config/index.tsx                    # createBrowserRouter + lazy screens
+│   │   ├── private/index.tsx                   # PrivateGuard
+│   │   └── public/index.tsx                    # PublicGuard
+│   ├── environments/index.ts                   # { apiUrl, useMocks, envName }
 │   ├── providers/index.tsx                     # QueryClientProvider + <Toaster />
-│   └── mocks/
-│       ├── browser/index.ts                    # setupWorker (dev / e2e)
-│       └── handlers/index.ts                   # [...handlersCatalog, ...]
+│   └── mocks/{browser,handlers}/index.ts
 ├── shared/
-│   ├── components/ui/
-│   │   ├── index.ts                            # barrel
-│   │   ├── button/  icon-button/  input/  quantity-stepper/
-│   │   ├── money/   alert/  modal/  kbd/  empty-state/
-│   ├── hooks/
-│   │   ├── use-hotkeys/index.ts
-│   │   └── use-announcer/index.tsx             # provider + hook para aria-live
-│   ├── utils/
-│   │   ├── cn/index.ts
-│   │   └── format-money/index.ts
-│   └── mocks/server/index.ts                   # setupServer(...handlers) para tests
+│   ├── components/ui/                          # button, icon-button, input, quantity-stepper, money,
+│   │   └── index.ts                            # alert, modal, kbd, empty-state, spinner (+ barrel)
+│   ├── hooks/{use-me, use-hotkeys, use-announcer}/index.ts(x)
+│   ├── utils/{cn, format-money, storage}/index.ts
+│   └── mocks/
+│       ├── server/index.ts                     # setupServer para tests
+│       └── data/index.ts                       # usuarios demo, tokens falsos
 ├── features/
+│   ├── auth/
+│   │   ├── index.ts                            # export { LoginScreen, useLogout }
+│   │   ├── services/
+│   │   │   ├── index.ts                        # loginSvc, refreshSvc, logoutSvc
+│   │   │   └── dtos/{request,response}/index.ts
+│   │   ├── hooks/use-logout/index.ts
+│   │   ├── mocks/handlers/index.ts
+│   │   └── screen/
+│   │       ├── index.tsx                       # LoginScreen
+│   │       ├── index.integration.test.tsx
+│   │       ├── hooks/index.ts                  # useLoginScreen (RHF + Zod, como useLoginPage)
+│   │       └── schema/index.ts                 # LoginSchema
 │   ├── catalog/
 │   │   ├── index.ts                            # export { useProductLookup, type Product, ProductNotFoundError }
 │   │   ├── models/product/index.ts
 │   │   ├── errors/product-not-found/index.ts
 │   │   ├── hooks/use-product-lookup/index.ts   # queryClient.fetchQuery con caché por código
-│   │   ├── services/
-│   │   │   ├── index.ts                        # getProductByCodeSvc
-│   │   │   ├── dtos/response/index.ts          # ProductResponseDto + ProductResponseSchema (Zod)
-│   │   │   └── mappers/index.ts                # toProduct(dto): euros → céntimos
-│   │   └── mocks/
-│   │       ├── data/index.ts                   # ~20 productos ficticios (EAN-13)
-│   │       └── handlers/index.ts               # GET */products/:code → 200 | 404 | 400
+│   │   ├── services/{index.ts, dtos/response/index.ts, mappers/index.ts}
+│   │   └── mocks/{data,handlers}/index.ts
 │   └── checkout/
 │       ├── index.ts                            # export { CheckoutScreen }
-│       ├── constants/
-│       │   ├── limits/index.ts                 # MAX_QUANTITY, CODE_PATTERN, UNDO_TIMEOUT_MS…
-│       │   └── messages/index.ts
-│       ├── models/
-│       │   ├── money/index.ts                  # add, multiply (céntimos)
-│       │   ├── quantity/index.ts               # clamp, isValidQuantity
-│       │   ├── sale-line/index.ts              # tipo + lineSubtotal
-│       │   └── sale/index.ts                   # tipo Sale + addProductToSale, changeLineQuantity,
-│       │                                       # removeLine, restoreLine, completeSale, saleTotal, itemCount
-│       ├── store/index.ts                      # useSaleStore (default) + selectores + initialSaleState
+│       ├── constants/{limits,messages}/index.ts
+│       ├── models/{money, quantity, sale-line, sale}/index.ts
+│       ├── store/index.ts                      # useSaleStore + selectores + initialSaleState
+│       ├── services/
+│       │   ├── index.ts                        # openSaleSvc, getCurrentSaleSvc, addLineSvc, updateLineSvc,
+│       │   │                                   # removeLineSvc, completeSaleSvc, cancelSaleSvc
+│       │   ├── dtos/{request,response}/index.ts
+│       │   └── mappers/index.ts                # toSale(dto): euros → céntimos
+│       ├── hooks/
+│       │   ├── use-current-sale/index.ts       # GET current → si 404, POST /sales → store
+│       │   └── use-sale-mutations/index.ts     # add/update/remove/complete/cancel optimistas
+│       ├── mocks/{data,handlers}/index.ts      # venta en memoria para MSW
 │       └── screen/
 │           ├── index.tsx                       # CheckoutScreen
-│           ├── index.test.tsx
 │           ├── index.integration.test.tsx
 │           ├── hooks/index.ts                  # useCheckoutScreen: atajos, modales, foco
 │           └── components/
-│               ├── scan-form/                  # index.tsx · hooks/ (useScanForm: RHF+Zod+lookup+store) · schema/
-│               ├── sale-table/                 # index.tsx (tabla semántica, selección ↑↓)
-│               ├── sale-line-row/              # index.tsx · hooks/ (cantidad, eliminar)
-│               ├── total-panel/                # index.tsx
-│               ├── finalize-sale-modal/        # index.tsx · hooks/
-│               ├── clear-sale-modal/           # index.tsx
-│               ├── sale-completed/             # index.tsx
-│               └── shortcuts-bar/              # index.tsx
+│               ├── checkout-header/            # cajero + cerrar sesión
+│               ├── scan-form/                  # index.tsx · hooks/ · schema/
+│               ├── sale-table/  sale-line-row/  total-panel/
+│               ├── finalize-sale-modal/  clear-sale-modal/  sale-completed/
+│               ├── server-status/              # "Conectando con el servidor…" (cold start)
+│               └── shortcuts-bar/
 e2e/
-├── checkout-happy-path.spec.ts
-├── checkout-unknown-code.spec.ts
-├── checkout-remove-undo.spec.ts
-└── checkout-keyboard-a11y.spec.ts
+├── mocked/      # contra MSW (deterministas)
+└── full-stack/  # contra la API real (docker en CI)
 ```
 
-## 3. Dominio en el front (DDD táctico ligero)
-
-Replicamos **lo justo** para que la UI sea correcta y testeable sin red:
+## 4. Dominio en el front
 
 ```ts
-// models/money        type Money = number (céntimos enteros) · add(a, b) · multiply(m, q)
-// models/quantity     MIN_QUANTITY=1 · MAX_QUANTITY=999 · clampQuantity(n) · isValidQuantity(n)
-// models/sale-line    { code, name, unitPrice: Money, quantity } · lineSubtotal(line)
-// models/sale         { status: 'OPEN' | 'COMPLETED', lines: SaleLine[] }
-//                     addProductToSale(sale, product, qty): Sale   ← RN-01, RN-02, RN-05
-//                     changeLineQuantity(sale, code, qty): Sale     ← RN-02
-//                     removeLine(sale, code): { sale, removed }     ← guarda línea + posición
-//                     restoreLine(sale, removed): Sale
-//                     completeSale(sale): Sale                      ← RN-06, RN-07
-//                     saleTotal(sale): Money · itemCount(sale): number
+// models/money        type Money = number (céntimos) · add · multiply
+// models/quantity     MIN_QUANTITY · MAX_QUANTITY · clampQuantity · isValidQuantity
+// models/sale-line    { id, productId, code, name, unitPrice: Money, quantity } · lineSubtotal
+// models/sale         { id, status, version, lines }
+//                     addProductToSale · changeLineQuantity · removeLine · restoreLine · saleTotal · itemCount
 ```
-Todas son **funciones puras** (entrada → nueva salida, sin mutar). Son el núcleo testeable.
+Son las **mismas reglas** que el agregado del back, en funciones puras, para el **feedback optimista**. La respuesta del servidor manda siempre.
 
-## 4. Store Zustand (`checkout/store`)
+## 5. Venta: Zustand + mutations optimistas
 
 ```ts
 interface SaleState {
-  sale: Sale;
+  sale: Sale | null;              // null mientras se carga/abre la venta
   lastAddedCode: string | null;   // resaltar + scroll
-  selectedCode: string | null;    // navegación con ↑↓
+  selectedLineId: string | null;  // navegación ↑↓
   lastRemoved: RemovedLine | null;// deshacer
 }
-interface SaleActions {
-  addProduct: (product: Product, quantity?: number) => void;
-  changeQuantity: (code: string, quantity: number) => void;
-  removeLine: (code: string) => void;
-  undoRemove: () => void;
-  selectLine: (code: string | null) => void;
-  clearSale: () => void;
-  completeSale: () => Sale;       // devuelve la venta cerrada para la pantalla de éxito
-  reset: () => void;
-}
-export const initialSaleState: SaleState = { … };
-const useSaleStore = create<SaleState & SaleActions>()(devtools((set, get) => ({
-  ...initialSaleState,
-  addProduct: (product, quantity = 1) =>
-    set((s) => ({ sale: addProductToSale(s.sale, product, quantity), lastAddedCode: product.code })),
-  …
-})));
-export const selectTotal = (s: SaleState) => saleTotal(s.sale);
-export const selectItemCount = (s: SaleState) => itemCount(s.sale);
-export default useSaleStore;
+// acciones: setSale, applyOptimistic(fn), rollback(snapshot), selectLine, markAdded, reset
 ```
-- **Por qué Zustand**: estado de cliente compartido por varios componentes (formulario, tabla, panel de total, atajos) sin *provider hell* y con selecciones atómicas → solo re-renderiza lo que cambia (el total no re-renderiza la tabla). Mismo criterio que task-manager.
-- **Por qué funciones puras en `models/` y no la lógica dentro del store**: el dominio se testea sin store; el store queda como fina capa de estado.
-- **Total derivado** vía selector → imposible que se desincronice.
 
-## 5. Formularios (RHF + Zod)
-
-### `scan-form`
 ```ts
-// schema/index.ts
-const ScanSchema = z.object({
-  code: z.string().trim()
-    .min(1, MESSAGES.codeRequired)
-    .regex(SCAN_INPUT_PATTERN, MESSAGES.codeInvalid),   // "8410001000011" o "6*8410001000011"
+// hooks/use-sale-mutations (extracto)
+const addLine = useMutation({
+  scope: { id: 'sale' },                                   // serializa con el resto de mutaciones
+  mutationFn: ({ product, quantity }) => addLineSvc(saleId, { code: product.code, quantity }),
+  onMutate: ({ product, quantity }) => {
+    const snapshot = useSaleStore.getState().sale;
+    useSaleStore.getState().applyOptimistic((s) => addProductToSale(s, product, quantity));
+    return { snapshot };
+  },
+  onSuccess: (sale) => useSaleStore.getState().setSale(sale),       // reconciliación
+  onError: (_e, _v, ctx) => useSaleStore.getState().rollback(ctx?.snapshot),
 });
-export default ScanSchema;
-
-// hooks/index.ts  (useScanForm)
-const { register, handleSubmit, reset, setFocus, setError, formState: { errors } } =
-  useForm<ScanFormValues>({ resolver: zodResolver(ScanSchema), defaultValues: { code: '' } });
-const onSubmit = async ({ code }) => {
-  const { quantity, productCode } = parseScanInput(code);
-  try {
-    const product = await lookup(productCode);          // use-product-lookup (TanStack Query)
-    addProduct(product, quantity);                      // store
-    announce(MESSAGES.added(product.name, …));
-    reset(); setFocus('code');
-  } catch (e) {
-    setError('code', { message: e instanceof ProductNotFoundError ? MESSAGES.notFound(productCode) : MESSAGES.network });
-  }
-};
-return { register, errors, submit: handleSubmit(onSubmit), isSubmitting };
-```
-- Un `Enter` vacío no muestra error (A1): `min(1)` se trata como no-op en `onSubmit` inválido.
-- Escaneos rápidos: `isSubmitting` no bloquea el input; las peticiones se encadenan en una cola dentro del hook para respetar el orden.
-
-### Cantidad en línea
-No es un `<form>`: `quantity-stepper` (botones −/+ y input numérico). La validación reutiliza `QuantitySchema` (`z.coerce.number().int().min(1).max(999)`) con `safeParse` en `blur`/`Enter` (DRY con el dominio).
-
-## 6. Servicios, DTOs y mappers
-
-Contrato del backend (`prueba-tecnica-classora-be/docs/04-api.md`):
-```http
-GET /api/v1/products/{code}
-200 → { "id": "uuid", "code": "8410001000011", "name": "Leche entera 1L", "price": 0.95 }
-404 → { "timestamp": "...", "status": 404, "error": "Not Found", "message": "Product not found.", "errors": [] }
 ```
 
-```
-getProductByCodeSvc(code)                         features/catalog/services
-  └─ httpService.get<unknown>(`/products/${code}`)     core/http → core/axios
-  └─ ProductResponseSchema.parse(data)                 services/dtos/response   (Zod)
-  └─ toProduct(dto)                                    services/mappers         (0.95 € → 95)
-  └─ Product
-errores: ApiError 404 → ProductNotFoundError · resto → ApiError (red/5xx)
-```
-- **Zod en la respuesta**: si cambia el contrato, falla en la frontera con un error claro.
-- **Mapper**: aísla el formato del backend; si cambia, se toca un archivo.
-- **TanStack Query** (`use-product-lookup`): `queryClient.fetchQuery({ queryKey: ['products', code], staleTime: 5 min })` → reescanear un producto no vuelve a la red (RNF-01). `retry: false` en 404.
-- **Interceptor de errores**: a diferencia de task-manager, **no** lanza un toast global: en una caja el error de producto va **inline** junto al input. El interceptor solo normaliza a `ApiError`; cada hook decide cómo mostrarlo (inline, toast de `sonner` para errores generales).
+| Acción del cajero | Optimista | Petición | Al confirmar |
+|---|---|---|---|
+| Escanear | `addProductToSale` | `POST /sales/{id}/lines` | venta del servidor |
+| Cambiar cantidad | `changeLineQuantity` | `PATCH …/lines/{lineId}` | ídem |
+| Eliminar | `removeLine` (+ guarda `lastRemoved`) | `DELETE …/lines/{lineId}` | ídem |
+| Deshacer | `restoreLine` | `POST …/lines` con código y cantidad | ídem |
+| Finalizar | — (espera respuesta) | `PATCH …/complete` | pantalla de éxito → nueva venta |
+| Vaciar | — (espera respuesta) | `PATCH …/cancel` → `POST /sales` | venta nueva |
 
-## 7. Integración por fases
+- **¿Por qué Zustand si el servidor es la fuente de verdad?** La venta en pantalla la leen varios componentes (formulario, tabla, total, atajos) y cambia en cada escaneo. Zustand da selecciones atómicas y un sitio claro para el estado optimista y de UI. TanStack Query se encarga del transporte, la serialización y los reintentos.
+- Finalizar y vaciar **no** son optimistas: son irreversibles y el cajero debe ver la confirmación real.
 
-| Fase | Venta | Catálogo |
-|---|---|---|
-| **1 · Entrega** | Zustand en cliente | `GET /products/{code}` contra **MSW** |
-| **2 · Con backend** | Servidor fuente de verdad (`/sales/*`), UI optimista con el store y reconciliación con la respuesta | API real |
+## 6. Escaneo: lookup + línea
 
-Conmutación con `VITE_USE_MOCKS` y `VITE_API_URL` por modo (`.env.localhost`, `.env.dev`, `.env.prod`).
+1. `scan-form` (RHF + Zod) valida el formato y separa el multiplicador (`6*8410001000011`).
+2. `use-product-lookup`: `GET /products/{code}` con caché de 5 min. Un 404 se muestra **inline** y no se toca la venta.
+3. Con el producto (nombre y precio) → mutation `addLine` optimista.
+4. `reset()` + `setFocus('code')` + anuncio `aria-live`.
 
-## 8. Decisiones (ADRs)
+## 7. Formularios (RHF + Zod)
+- `auth/screen`: `LoginSchema` (email válido, contraseña requerida) en `useLoginScreen`, igual que `useLoginPage` de task-manager. Si llega `?expired=1`, aviso "Tu sesión ha caducado".
+- `scan-form`: `ScanSchema` (ver §6).
+- Cantidad en línea: no es `<form>`; reutiliza `QuantitySchema` con `safeParse` (DRY).
+
+## 8. Servicios, DTOs y mappers
+Contratos en `prueba-tecnica-classora-be/docs/04-api.md`. Cadena: `xxxSvc → httpService → axios → Zod.parse → mapper → modelo`. Los componentes nunca ven DTOs; el dinero pasa a céntimos en el mapper.
+
+## 9. Resiliencia
+- **Arranque en frío de Render** (plan gratuito, unos 50 s): `server-status` muestra "Conectando con el servidor…" con spinner accesible (`role="status"`) mientras `use-current-sale` reintenta (backoff, máximo 60 s). El input queda deshabilitado hasta tener venta.
+- **Errores de red** en una mutación → rollback + mensaje con "Reintentar"; la venta en pantalla nunca queda en un estado que el servidor no tenga.
+- **409** (venta ya cerrada o conflicto de versión) → recargar `GET /sales/current` y avisar.
+
+## 10. Decisiones (ADRs)
 
 | # | Decisión | Alternativas | Motivo |
 |---|---|---|---|
-| ADR-01 | Features + `index` por carpeta, kebab-case | Por tipo; archivos nombrados | Forma de trabajo del autor (task-manager); cohesión |
-| ADR-02 | **Zustand** para la venta | `useReducer`+Context, Redux | Selecciones atómicas, sin providers, poco boilerplate |
-| ADR-03 | TanStack Query para productos | `useEffect` + `useState` | Caché, deduplicación, estados |
-| ADR-04 | **Axios** + `httpService` + interceptores | `fetch` | Mismo patrón que task-manager; timeout e interceptores nativos |
-| ADR-05 | **RHF + Zod** en formularios | Estado controlado a mano | Menos renders, validación declarativa, schema reutilizable |
-| ADR-06 | **Tailwind v4** con `@theme` | CSS Modules | Tokens de Figma → clases; mismo stack que task-manager |
-| ADR-07 | Céntimos enteros | decimales, decimal.js | Exactitud sin dependencias |
-| ADR-08 | MSW en tests, dev y E2E | json-server, mocks a mano | Un solo mock a nivel de red |
-| ADR-09 | Playwright para E2E | Cypress (task-manager) | Lo pide el equipo; axe integrado; multi-navegador |
-| ADR-10 | Errores de producto inline, no toast global | Toast en interceptor | En caja el error debe estar donde mira el cajero |
-| ADR-11 | Sin React Router | Router | Una sola pantalla (YAGNI) |
-
-## 9. Atajos y foco: diseño técnico
-- `use-hotkeys(map, { enabled })`: un listener en `window`, ignora teclas dentro de inputs salvo una whitelist (`F12`, `Esc`), se desactiva con modal abierto.
-- `useCheckoutScreen` define el mapa de atajos (CU-06) y controla los modales.
-- Foco: tras cada acción del store, el hook de la screen llama a `setFocus('code')`; los modales devuelven el foco al input al cerrar.
+| ADR-01 | Features + `index` por carpeta, kebab-case | Por tipo | Forma de trabajo del autor; cohesión |
+| ADR-02 | Zustand para la venta en pantalla + mutations optimistas | Solo TanStack Query cache; `useReducer` | Selecciones atómicas; estado optimista/UI explícito |
+| ADR-03 | TanStack Query para peticiones (`scope` para serializar) | `useEffect` | Caché, reintentos, orden garantizado |
+| ADR-04 | Axios + interceptores (errors, jwt) | `fetch` | Patrón de task-manager; refresh silencioso |
+| ADR-05 | React Router 7 + guards | Estado condicional | Login + caja; mismo patrón que task-manager |
+| ADR-06 | RHF + Zod | Estado controlado | Menos renders, schema reutilizable |
+| ADR-07 | Tailwind v4 `@theme` | CSS Modules | Tokens de Figma → clases |
+| ADR-08 | Céntimos enteros | decimales | Exactitud |
+| ADR-09 | MSW en tests, desarrollo offline y E2E `mocked` | Mocks a mano | Un solo mock a nivel de red |
+| ADR-10 | Errores de producto inline, no toast global | Toast en interceptor | El error debe estar donde mira el cajero |
+| ADR-11 | Finalizar/vaciar no optimistas | Todo optimista | Irreversibles: confirmación real |
+| ADR-12 | Playwright (mocked + full-stack) | Cypress | Pedido del autor; axe integrado |

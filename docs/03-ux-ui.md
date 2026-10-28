@@ -17,7 +17,7 @@
 
 ```
 ┌───────────────────────────────────────────────────────────────┬──────────────────────────┐
-│ HEADER  Caja 03 · Cajero: Ana · 28/10/2026 14:32               │                          │
+│ HEADER  Caja · Cajero: Ana López · 14:32      [Cerrar sesión]   │                          │
 ├───────────────────────────────────────────────────────────────┤        TOTAL             │
 │ [🔍  Escanea o introduce un código…                ] [Añadir ⏎]│      47,85 €             │
 │  ⚠ No existe ningún producto con el código 1234                │   12 artículos · 5 líneas│
@@ -40,6 +40,7 @@
 
 ## 3. Frames a entregar en Figma
 
+0. **Login**: email, contraseña, botón Entrar; estados de error (credenciales, sesión caducada) y carga.
 1. **Venta vacía**: estado vacío con ilustración mínima + "Escanea un producto para empezar". Finalizar deshabilitado.
 2. **Venta con productos**: 5–8 líneas, una resaltada como "último añadido", una seleccionada por teclado.
 3. **Error código inexistente**: mensaje inline + input en estado error.
@@ -49,6 +50,8 @@
 7. **Modal finalizar venta**: resumen + Confirmar/Cancelar.
 8. **Venta finalizada**: feedback de éxito.
 9. **Modal vaciar venta** (destructivo).
+9b. **Conectando con el servidor** (arranque en frío): spinner + mensaje, input deshabilitado.
+9c. **Cerrar sesión con venta abierta**: confirmación.
 10. **Página de componentes** con todas las variantes (ver §5).
 11. (Opcional) **Prototipo** clicable del flujo principal.
 
@@ -113,6 +116,10 @@ Mismos nombres en Figma y en `src/index.css`. En código se usan **solo** vía c
 
 | Situación | Texto |
 |---|---|
+| Login: credenciales | "Email o contraseña incorrectos" |
+| Login: sesión caducada | "Tu sesión ha caducado. Vuelve a entrar." |
+| Arranque en frío | "Conectando con el servidor…" |
+| Cerrar sesión con venta | "La venta quedará abierta y podrás recuperarla al volver" |
 | Placeholder input | "Escanea o introduce un código" |
 | Código inexistente | "No existe ningún producto con el código {code}" |
 | Formato inválido | "Código no válido: solo números (4–14 dígitos)" |

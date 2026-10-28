@@ -1,7 +1,45 @@
 # 02 · Casos de uso (Frontend)
 
-Actor único: **Cajero**. Precondición general: pantalla de caja abierta con una venta `OPEN` (vacía al inicio).
+Actor único: **Cajero** (el único tipo de usuario; sin roles). Precondición general de CU-01…CU-06: sesión iniciada y venta `OPEN` cargada desde el servidor.
 Cada CU indica qué piezas del código lo implementan y qué tests lo cubren.
+
+---
+
+## CU-00 · Iniciar sesión  *(RF-15, RF-17)*
+
+**Flujo principal**
+1. El cajero abre la app sin sesión → `/login` (guard público/privado).
+2. Introduce email y contraseña (RHF + Zod) y pulsa **Entrar** (o `Enter`).
+3. `POST /auth/login` → tokens en storage → `GET /users/me` → `/`.
+4. La caja carga la venta (CU-08) y pone el foco en el input de código.
+
+**Alternativos**
+| Caso | Respuesta |
+|---|---|
+| A1 · Campos vacíos / email inválido | Errores bajo cada campo (`aria-describedby`), foco en el primero con error |
+| A2 · 401 | "Email o contraseña incorrectos" (`role="alert"`); se limpia la contraseña |
+| A3 · 429 | "Demasiados intentos, espera un minuto" |
+| A4 · Red / arranque en frío | "Conectando con el servidor…" y reintento |
+| A5 · Llega con `?expired=1` | Aviso "Tu sesión ha caducado. Vuelve a entrar." |
+
+**Implementación:** `auth/screen` (+ `hooks/` useLoginScreen, `schema/`) · `auth/services` · `core/router` (guards) · `shared/utils/storage`.
+**Tests:** unit (schema, hook), integración MSW (200, 401), E2E (login en ambos proyectos).
+
+---
+
+## CU-08 · Cargar o recuperar la venta  *(RF-18, RF-19)*
+
+**Flujo:** al entrar en `/` → `GET /sales/current` → 200: se pinta la venta abierta (con sus líneas) · 404: `POST /sales` y venta vacía.
+**Alternativos:** arranque en frío o red caída → `server-status` "Conectando con el servidor…" con reintentos; input deshabilitado hasta tener venta.
+**Implementación:** `checkout/hooks/use-current-sale` · `screen/components/server-status`.
+
+---
+
+## CU-07 · Cerrar sesión  *(RF-16)*
+
+**Disparador:** botón **Cerrar sesión** en la cabecera (junto al nombre del cajero).
+**Flujo:** si hay productos en la venta → confirmación "La venta quedará abierta y podrás recuperarla al volver" → limpiar tokens y caché → `/login`.
+**Implementación:** `checkout/screen/components/checkout-header` · `auth/hooks/use-logout`.
 
 ---
 
@@ -31,7 +69,7 @@ Cada CU indica qué piezas del código lo implementan y qué tests lo cubren.
 
 **Postcondición:** la venta refleja el producto; el input vacío y con foco.
 
-**Implementación:** `screen/components/scan-form` (+ `hooks/` useScanForm con RHF y `schema/` Zod) · `catalog/hooks/use-product-lookup` · `catalog/services` (`getProductByCodeSvc`) · `useSaleStore.addProduct` · `models/sale` (`addProductToSale`).
+**Implementación:** `screen/components/scan-form` (+ `hooks/` useScanForm con RHF y `schema/` Zod) · `catalog/hooks/use-product-lookup` · `use-sale-mutations` (`addLine` optimista → `POST /sales/{id}/lines`) · `models/sale` (`addProductToSale`).
 **Tests:** unit (`addProductToSale`, `parseScanInput`, store `addProduct`, `scan-form`), integración MSW (200, 404, 500), E2E flujo principal.
 
 ---
@@ -84,12 +122,12 @@ Cada CU indica qué piezas del código lo implementan y qué tests lo cubren.
 **Flujo principal**
 1. Se abre un modal con el resumen: nº de artículos, nº de líneas y **total**.
 2. Foco en **Confirmar**. `Enter` confirma, `Esc` cancela.
-3. Al confirmar: (fase 1) se marca la venta `COMPLETED` en el cliente / (fase 2) `PATCH /sales/{id}/complete`.
-4. Pantalla de éxito breve "Venta finalizada · 47,85 €" y se inicia una venta nueva vacía con foco en el input.
+3. Al confirmar: `PATCH /sales/{id}/complete` (no optimista; botón con estado de carga).
+4. Pantalla de éxito breve "Venta finalizada · 47,85 €" → `POST /sales` → venta nueva vacía con foco en el input.
 
-**Alternativos:** D1 · Cancelar → vuelve a la venta sin cambios. D2 · Error del backend (fase 2) → se mantiene la venta y se muestra el error con reintento; **nunca** se pierde la venta.
+**Alternativos:** D1 · Cancelar → vuelve a la venta sin cambios. D2 · Error del backend → se mantiene la venta y se muestra el error con reintento; **nunca** se pierde la venta.
 
-**Implementación:** `screen/components/finalize-sale-modal` · `shared/components/ui/modal` · `useSaleStore.completeSale` / `reset`.
+**Implementación:** `screen/components/finalize-sale-modal` · `shared/components/ui/modal` · `use-sale-mutations` (`complete`) · `useSaleStore.setSale`.
 **Tests:** unit (`completeSale`, store, botón deshabilitado), integración, E2E (flujo completo).
 
 ---
@@ -97,7 +135,7 @@ Cada CU indica qué piezas del código lo implementan y qué tests lo cubren.
 ## CU-05 · Vaciar venta  *(RF-13)*
 
 **Disparador:** botón secundario **Vaciar venta** (o `Ctrl+Supr`).
-**Flujo:** modal de confirmación destructivo ("Se eliminarán 7 productos") → confirmar → venta vacía. No hay deshacer, por eso sí usa confirmación.
+**Flujo:** modal de confirmación destructivo ("Se eliminarán 7 productos") → confirmar → `PATCH /sales/{id}/cancel` → `POST /sales` → venta vacía. No hay deshacer, por eso sí usa confirmación.
 
 ---
 
@@ -127,3 +165,6 @@ Cada CU indica qué piezas del código lo implementan y qué tests lo cubren.
 | CU-04 | 09 | ✅ | ✅ | ✅ |
 | CU-05 | 13 | ✅ | ➖ | ➖ |
 | CU-06 | RNF-03 | ✅ | ➖ | ✅ (E2E solo teclado) |
+| CU-00 | 15, 17 | ✅ | ✅ 200/401 | ✅ |
+| CU-07 | 16 | ✅ | ➖ | ✅ (full-stack) |
+| CU-08 | 18, 19 | ✅ | ✅ current 200/404 | ✅ (full-stack: recargar recupera la venta) |

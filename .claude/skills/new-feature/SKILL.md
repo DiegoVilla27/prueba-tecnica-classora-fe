@@ -32,36 +32,44 @@ src/features/<feature>/
 ```
 
 ## 2. Store Zustand (si aplica) — skill `react-zustand`
+Si el estado viene del servidor, el store es una **copia local** que se actualiza de forma optimista y se reconcilia con la respuesta (CLAUDE.md §3).
 ```ts
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
-export interface SaleState { sale: Sale; lastAddedCode: string | null; … }
-export interface SaleActions { addProduct: (p: Product, q?: number) => void; reset: () => void; … }
+export interface SaleState { sale: Sale | null; lastAddedCode: string | null; selectedLineId: string | null; … }
+export interface SaleActions {
+  setSale: (sale: Sale) => void;                       // reconciliación con el servidor
+  applyOptimistic: (fn: (sale: Sale) => Sale) => void; // cambio optimista con funciones de models/
+  rollback: (snapshot: Sale | null) => void;
+  reset: () => void;
+}
 
-export const initialSaleState: SaleState = { sale: createEmptySale(), lastAddedCode: null, … };
+export const initialSaleState: SaleState = { sale: null, lastAddedCode: null, selectedLineId: null, … };
 
 const useSaleStore = create<SaleState & SaleActions>()(
   devtools(
     (set) => ({
       ...initialSaleState,
-      addProduct: (product, quantity = 1) =>
-        set((s) => ({ sale: addProductToSale(s.sale, product, quantity), lastAddedCode: product.code })),
+      setSale: (sale) => set({ sale }),
+      applyOptimistic: (fn) => set((s) => (s.sale ? { sale: fn(s.sale) } : s)),
+      rollback: (snapshot) => set({ sale: snapshot }),
       reset: () => set(initialSaleState),
     }),
     { name: 'sale', enabled: import.meta.env.DEV },
   ),
 );
 
-export const selectTotal = (s: SaleState) => saleTotal(s.sale);
+export const selectTotal = (s: SaleState) => (s.sale ? saleTotal(s.sale) : 0);
 export default useSaleStore;
 ```
-- Lógica de negocio en `models/` (puras); el store solo las llama.
-- Consumir con selecciones atómicas: `useSaleStore((s) => s.sale.lines)`, `useSaleStore(selectTotal)`.
+- Lógica de negocio en `models/` (puras); el store solo las aplica.
+- Selecciones atómicas: `useSaleStore((s) => s.sale?.lines)`, `useSaleStore(selectTotal)`.
 
 ## 3. Pasos
 1. `models/` + unit (TDD).
-2. `services/` con `new-service` + mocks MSW, y registrar los handlers en `core/mocks/handlers` y `shared/mocks/server`.
+2. `services/` con `new-service` + mocks MSW (con estado en memoria si el recurso cambia), registrados en `core/mocks/handlers` y `shared/mocks/server`.
+2b. Si la feature tiene pantalla propia: ruta en `core/router/config` con `React.lazy` y el guard que corresponda.
 3. `store/` + unit (`setState(initialState)` en `beforeEach`).
 4. Screen y componentes con `new-component`.
 5. Integración de la screen con MSW.

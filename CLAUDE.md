@@ -10,7 +10,7 @@
 
 ## 0. Contexto en una frase
 
-Pantalla de **caja de supermercado** (React + TypeScript) usada de forma intensiva por cajeros: **rapidez, legibilidad, accesibilidad y prevención de errores** mandan sobre cualquier decisión estética o técnica.
+Aplicación de **caja de supermercado** (React + TypeScript) usada de forma intensiva por cajeros autenticados, conectada a la API Java (`prueba-tecnica-classora-be`) y desplegada en Vercel (`dev` / `prod`): **rapidez, legibilidad, accesibilidad y prevención de errores** mandan sobre cualquier decisión estética o técnica.
 
 ---
 
@@ -19,10 +19,12 @@ Pantalla de **caja de supermercado** (React + TypeScript) usada de forma intensi
 | Ámbito | Elección |
 |---|---|
 | Build | Vite · alias `@core`, `@features`, `@shared` · puerto 3000 · modos `localhost` / `dev` / `prod` (`.env.<modo>`) |
+| Routing | React Router 7 (`/login`, `/`) con guards público/privado (patrón task-manager) |
 | UI | React 19 + TypeScript `strict` + **React Compiler** |
-| Estado de cliente (venta en curso) | **Zustand** |
-| Estado de servidor / caché | **TanStack Query** |
-| HTTP | **Axios**: `core/axios` (instancia) + `core/http` (`httpService`) + `core/interceptors` |
+| Venta en curso (copia local de la venta del servidor + estado de UI) | **Zustand** |
+| Peticiones, caché y mutaciones | **TanStack Query** (mutaciones de la venta serializadas con `scope`) |
+| HTTP | **Axios**: `core/axios` (instancia) + `core/http` (`httpService`) + `core/interceptors` (`errors`, `jwt` con refresh silencioso) |
+| Sesión | Tokens en `shared/utils/storage` (como task-manager); usuario actual con `use-me` |
 | Formularios | **React Hook Form + Zod** (`@hookform/resolvers/zod`) |
 | Validación runtime de respuestas | Zod en `services/dtos` |
 | Estilos | **Tailwind CSS v4** (`@tailwindcss/vite`), tokens en `@theme` de `src/index.css`, `cn()` = `clsx` + `tailwind-merge` |
@@ -31,8 +33,9 @@ Pantalla de **caja de supermercado** (React + TypeScript) usada de forma intensi
 | Mock de red | MSW (Node en tests, Worker en dev/e2e) |
 | E2E | Playwright + `@axe-core/playwright` |
 | Calidad | oxlint (plugins `react`, `typescript`, `oxc`, `jsx-a11y`, `import`) · Prettier · Husky + lint-staged · commitlint (Conventional Commits) |
+| Entrega | Dockerfile (build + nginx) · `docker-compose.yml` en la red `shared-network` · Vercel (`dev` → preview, `main` → production) · GitHub Actions |
 
-> **No aplica** (es una SPA con Vite): Server Components, Server Actions, React Router, Redux. Si una skill copiada de task-manager los menciona, se ignora esa parte.
+> **No aplica** (es una SPA con Vite): Server Components, Server Actions, Redux. Si una skill copiada de task-manager los menciona, se ignora esa parte.
 
 ---
 
@@ -46,14 +49,17 @@ src/
 ├── core/                      # Transversal SIN UI de negocio
 │   ├── axios/                 # instancia Axios (baseURL, timeout, headers)
 │   ├── http/                  # httpService (get/post/patch/delete tipados)
-│   ├── interceptors/errors/   # normaliza errores a ApiError
+│   ├── interceptors/
+│   │   ├── errors/            # normaliza errores a ApiError
+│   │   └── jwt/               # Bearer + refresh silencioso en 401 (cola de peticiones)
+│   ├── router/                # config de rutas + guards private/public
 │   ├── environments/          # lectura tipada de import.meta.env
 │   ├── providers/             # QueryClientProvider + Toaster
 │   └── mocks/                 # browser worker + agregador de handlers
 ├── shared/                    # Reutilizable entre features, sin negocio
 │   ├── components/ui/         # Design system (button, input, modal, alert, kbd…) + index.ts barrel
-│   ├── hooks/                 # use-hotkeys, use-announcer…
-│   ├── utils/                 # cn, format-money…
+│   ├── hooks/                 # use-hotkeys, use-announcer, use-me…
+│   ├── utils/                 # cn, format-money, storage…
 │   └── mocks/server/          # setupServer para tests
 └── features/
     └── [feature]/
@@ -115,9 +121,9 @@ e2e/                           # Specs Playwright
 ### 2.3 Reglas de dependencia (se validan con `no-restricted-imports` de oxlint)
 
 ```
-main.tsx → core/providers → features → shared → core
+main.tsx → core/router · core/providers → features → shared → core
 ```
-- `core` no importa de `features`.
+- `core` no importa de `features` (excepción: `core/router` importa las screens públicas de cada feature por su `index.ts`, con `React.lazy`).
 - `shared` no importa de `features`.
 - Una feature **no importa el interior de otra**: solo su `index.ts` público.
 - `screen/components/*` y `screen/hooks` son privados de la screen.
@@ -132,18 +138,22 @@ Componente (pinta) → su hook (orquesta) → TanStack Query → xxxSvc → http
                                                                    mapper DTO → modelo ↗
 ```
 - Los componentes reciben **modelos de dominio**, nunca DTOs. El mapper es la única frontera.
-- **Server state** (productos) → TanStack Query. **Client state** (venta en curso) → Zustand. **Estado local** (abrir/cerrar algo) → `useState`. Nunca `useEffect` para pedir datos.
+- **Peticiones** → TanStack Query (queries y mutations). **Venta en curso** → Zustand: copia local que se actualiza de forma optimista y se reconcilia con la respuesta del servidor. **Estado local** (abrir/cerrar algo) → `useState`. Nunca `useEffect` para pedir datos.
 
 ---
 
-## 3. Estado con Zustand (venta)
+## 3. Estado con Zustand (venta) + TanStack Query (servidor)
 
-- Un store por feature en `store/index.ts`: `create<SaleStore>()(devtools((set, get) => ({…})))` (`devtools` solo en desarrollo).
-- **La lógica de negocio vive en `models/`** (funciones puras `addProductToSale(sale, product, qty) → Sale`); las acciones del store solo las llaman y hacen `set`. Así el dominio se testea sin store y el store se testea sin UI.
-- **Selecciones atómicas**: `useSaleStore((s) => s.sale.lines)`, nunca `useSaleStore()` entero. Valores derivados (total, nº de artículos) como **selectores** (`selectTotal`), nunca guardados en el estado.
-- Estado inmutable (spread / funciones puras). Prohibido mutar.
-- Exportar `initialSaleState` y una acción `reset()` para los tests (`useSaleStore.setState(initialSaleState)` en `beforeEach`).
-- Sin `persist` (YAGNI; ver roadmap).
+- El **servidor es la fuente de verdad** de la venta (precios, total). Zustand guarda la **copia local** (`sale` mapeada desde `SaleResponseDto`) más el estado de UI (`selectedLineId`, `lastAddedCode`, `lastRemoved`).
+- Cada acción del cajero es una **mutation** de TanStack Query con `scope: { id: 'sale' }` (se ejecutan en serie, respetando el orden de escaneo):
+  1. `onMutate`: guarda un *snapshot* y aplica el cambio optimista en el store con funciones puras de `models/` (feedback < 100 ms).
+  2. `onSuccess`: reemplaza `sale` por la respuesta mapeada (reconciliación).
+  3. `onError`: restaura el *snapshot* y muestra el error.
+- **La lógica de negocio vive en `models/`** (funciones puras); el store solo las llama y hace `set`.
+- Store en `store/index.ts` con `create<SaleStore>()(devtools(...))` (`devtools` solo en desarrollo).
+- **Selecciones atómicas**: `useSaleStore((s) => s.sale.lines)`, nunca el store entero. Derivados (total, nº artículos) como **selectores**.
+- Estado inmutable. Exportar `initialSaleState`; en tests `useSaleStore.setState(initialSaleState)`.
+- Sin `persist`: al recargar, la venta se recupera del servidor (`GET /sales/current`).
 
 ## 4. Formularios con React Hook Form + Zod
 
@@ -223,7 +233,12 @@ Reglas (estilo task-manager):
 - Store: `useSaleStore.setState(initialSaleState)` en `beforeEach`.
 - Cobertura ≥ 80 % (lines/functions/branches/statements).
 
-## 10. Flujo de trabajo del agente
+## 10. Git y entrega
+
+- Ramas: `feature/*` → PR a `dev` → PR a `main`. `dev` despliega a **dev** (Vercel preview contra la API dev de Render), `main` a **prod** (ver [`docs/08-despliegue.md`](docs/08-despliegue.md)).
+- **Conventional Commits siempre** (`feat(checkout): …`, `fix(auth): …`, `test: …`, `docs: …`). No commitear ni pushear sin que el usuario lo pida.
+
+## 11. Flujo de trabajo del agente
 
 1. Leer el doc relevante de `docs/` antes de tocar código.
 2. Usar las skills del proyecto: `new-feature`, `new-component`, `new-service`, `write-tests`, `update-ai-log`, y las de tecnología (`react-core`, `react-zustand`, `react-hook-form-zod`, `react-tanstack-query`, `react-zod`, `react-a11y`, `web-tailwind`, `web-typescript-react`, `web-tsdoc`, `web-modern-testing`, `clean-code`, `conventional-commits`…).
