@@ -96,3 +96,10 @@ Registro del uso de inteligencia artificial en el frontend. Es el entregable de 
 - **Qué hizo la IA:** Ajustó el actor de `docs/02-casos-de-uso.md` (sin `CASHIER`/`SUPERVISOR`). El resto del front ya trataba al usuario como cajero.
 - **Decisiones / correcciones humanas:** Corrección del autor: el supervisor no estaba en el enunciado.
 - **Resultado:** Doc actualizado; sin commit.
+
+### #07 · 2026-10-28 16:10 · Commit y push del nuevo alcance
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt (resumen):** Hacer commit y push en ambos repos.
+- **Qué hizo la IA:** Commit `docs: expand scope to authenticated server-backed checkout` con los cambios de las peticiones #05 y #06, push a `origin/main` y este commit del log.
+- **Decisiones / correcciones humanas:** Ninguna.
+- **Resultado:** Hecho.
