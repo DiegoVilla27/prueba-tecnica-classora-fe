@@ -62,3 +62,10 @@ Registro del uso de inteligencia artificial en el frontend. Es el entregable de 
   - El interceptor de errores no lanza toasts globales: en caja el error va inline.
   - Sin React Router (una sola pantalla).
 - **Resultado:** Docs y skills actualizados; sin código.
+
+### #04 · 2026-10-28 15:48 · Commit y push de la documentación
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt (resumen):** Hacer commit y push en cada proyecto, siempre con Conventional Commits.
+- **Qué hizo la IA:** Primer commit en `main` (`docs: add project documentation, agent rules and skills`) y push a `origin/main`; después este commit con la entrada del log.
+- **Decisiones / correcciones humanas:** El autor fija Conventional Commits como norma para todos los commits.
+- **Resultado:** Hecho; rama `main` publicada en GitHub.
