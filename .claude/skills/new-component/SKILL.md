@@ -8,7 +8,7 @@ description: Crea un componente React (ui compartido, de feature o de screen) co
 ## 1. Ubicación (en este orden)
 1. ¿Solo lo usa una screen? → `src/features/<feature>/screen/components/<name>/`
 2. ¿Varias partes de la feature? → `src/features/<feature>/components/<name>/`
-3. ¿Varias features y sin negocio? → `src/shared/components/ui/<name>/` + añadir `export * from './<name>'` al barrel `ui/index.ts`.
+3. ¿Varias features y sin negocio? → design system con **Atomic Design** (`CLAUDE.md` §2.4): elegir el nivel (`atoms` · `molecules` · `organisms` · `templates`) → `src/shared/components/ui/<nivel>/<name>/` + `export * from './<name>'` en el barrel del nivel (`<nivel>/index.ts`). Solo importa de niveles inferiores; nada de negocio, store ni services.
 Empieza en el nivel más bajo; subir es fácil.
 
 ## 2. Estructura (kebab-case)

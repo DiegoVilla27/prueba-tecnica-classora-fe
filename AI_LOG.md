@@ -103,3 +103,22 @@ Registro del uso de inteligencia artificial en el frontend. Es el entregable de 
 - **Qué hizo la IA:** Commit `docs: expand scope to authenticated server-backed checkout` con los cambios de las peticiones #05 y #06, push a `origin/main` y este commit del log.
 - **Decisiones / correcciones humanas:** Ninguna.
 - **Resultado:** Hecho.
+
+### #08 · 2026-10-29 00:30 · Hito 0: Figma, tokens propios y design system con Atomic Design
+- **Herramienta:** Claude Code (Claude Opus 5.5) + conector de Figma
+- **Prompt (resumen):** Revisar los diseños de Figma. Definir nosotros los tokens y la tipografía de forma profesional. Todos los componentes reutilizables en `shared/components/ui` con Atomic Design. Cerrar el hito 0 y meter React Compiler en el hito 1.
+- **Qué hizo la IA:**
+  - El conector de Figma se conectó, pero la primera lectura del archivo devolvió el límite de llamadas del plan Starter. El usuario exportó las capturas a `docs/figma/` (9 frames).
+  - **Tokens:** midió el color exacto de los píxeles de las capturas y calculó el contraste WCAG de cada par.
+    - Corrigió `ink-subtle` (`#798a84` → `#5f716a`, de 3,3:1 a 4,7:1).
+    - Añadió `border-strong` (`#758981`, 3,7:1) para el borde de los inputs, que en Figma no llegaba al 3:1.
+    - Tipografía Inter Variable autoalojada con `tabular-nums` y escala `total`/`display`/`title`/`scan`/`body`/`overline`; radios, sombra, alturas y movimiento.
+    - Todo documentado con el `@theme` completo en `docs/03-ux-ui.md` §4.
+  - **Atomic Design:**
+    - Nueva sección `CLAUDE.md` §2.4: niveles, qué puede importar cada uno, sin negocio, API consistente, accesible por defecto y tests con `axe`.
+    - Inventario de 26 piezas sacadas de los frames (12 atoms, 8 molecules, 4 organisms, 2 templates) y de los componentes de pantalla que las componen (`docs/03-ux-ui.md` §5).
+    - Rutas actualizadas en `04-arquitectura`, `02-casos-de-uso`, `05-testing` y el skill `new-component`.
+  - **Frames y textos:** tabla de frames (diseñados vs construidos en código) y microcopy literal de Figma (§3 y §6).
+  - **Roadmap:** hito 0 ✅; hito 1 con React Compiler detallado; hito 4 rehecho para Atomic Design.
+- **Decisiones / correcciones humanas:** Los tokens los define el proyecto (Figma no tiene variables). Atomic Design en `shared/components/ui`.
+- **Resultado:** Hito 0 completado. Commit `docs: close hito 0 with design tokens and atomic design system` y push a `origin/main`.

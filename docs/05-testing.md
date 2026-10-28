@@ -58,7 +58,7 @@ describe('Checkout: ScanForm', () => {
 | `catalog/services/mappers` | DTO `0.95` → `95` céntimos |
 | `catalog/services` | `getProductByCodeSvc` devuelve `Product` (MSW por defecto) |
 | `shared/utils/format-money` · `cn` | `4785` → `"47,85 €"` · merge de clases |
-| `shared/components/ui/*` | renderiza, dispara `onClick`/`onChange`, nombre accesible |
+| `shared/components/ui/{atoms,molecules,organisms,templates}/*` | renderiza cada variante, dispara `onClick`/`onChange`, teclado, nombre accesible y `axe` sin violaciones |
 | `screen/components/*` | pintan datos y emiten acciones |
 | hooks (`hooks/index.ts`) | `renderHook` del caso normal; sus services se pueden mockear con `vi.mock` |
 

@@ -1,6 +1,6 @@
 # 03 · Diseño UX/UI (Figma) y su traducción a código
 
-> Parte 1 de la prueba. Entregable: **enlace a Figma**. El código debe ser **fiel** a ese diseño, por eso los tokens de Figma se replican 1:1 en el bloque `@theme` de `src/index.css` (Tailwind v4).
+> Parte 1 de la prueba. Entregable: **enlace a Figma** ([Classora TPV · Login y caja](https://www.figma.com/design/hbVVhN8sPqR56dLazj9IEy/Classora-TPV-%C2%B7-Login-y-caja)) y sus capturas en [`docs/figma/`](figma/). El código debe ser **fiel** a ese diseño: los tokens de §4 se han medido sobre esas capturas y viven en el bloque `@theme` de `src/index.css` (Tailwind v4).
 
 ## 1. Principios de diseño (y por qué)
 
@@ -38,97 +38,214 @@
 - Barra inferior con chuleta de atajos (enseña sin documentación).
 - Tablet (≤ 1024): el panel de total pasa a barra inferior fija.
 
-## 3. Frames a entregar en Figma
+## 3. Frames de Figma
 
-0. **Login**: email, contraseña, botón Entrar; estados de error (credenciales, sesión caducada) y carga.
-1. **Venta vacía**: estado vacío con ilustración mínima + "Escanea un producto para empezar". Finalizar deshabilitado.
-2. **Venta con productos**: 5–8 líneas, una resaltada como "último añadido", una seleccionada por teclado.
-3. **Error código inexistente**: mensaje inline + input en estado error.
-4. **Error de red**: mensaje distinto + botón Reintentar.
-5. **Cantidad en 1 → "¿Eliminar línea?"**: confirmación inline.
-6. **Toast deshacer** tras eliminar.
-7. **Modal finalizar venta**: resumen + Confirmar/Cancelar.
-8. **Venta finalizada**: feedback de éxito.
-9. **Modal vaciar venta** (destructivo).
-9b. **Conectando con el servidor** (arranque en frío): spinner + mensaje, input deshabilitado.
-9c. **Cerrar sesión con venta abierta**: confirmación.
-10. **Página de componentes** con todas las variantes (ver §5).
-11. (Opcional) **Prototipo** clicable del flujo principal.
+Capturas exportadas en [`docs/figma/`](figma/) (1366×768). ✅ = diseñado en Figma · 🧩 = sin frame propio: se construye en código con los mismos tokens y componentes, siguiendo el patrón del frame más cercano.
 
-## 4. Design tokens (Figma Variables → `@theme` de Tailwind v4)
+| # | Frame | Estado | Captura |
+|---|---|---|---|
+| 0 | **Login**: panel de marca + email, contraseña (Mostrar), Entrar en la caja | ✅ | `01 · Login/LoginScreen/Todos los estados.jpg` |
+| 0b | Login: credenciales incorrectas · sesión caducada · cargando | 🧩 `Alert` + `Button isLoading` | — |
+| 1 | **Venta vacía** (Finalizar deshabilitado) | 🧩 `EmptyState` en la tabla | — |
+| 2 | **Venta con productos**, último añadido resaltado | ✅ | `02 · Caja/01 · Con productos.jpg` |
+| 3 | **Código inexistente** | ✅ | `02 · Caja/04 · Código inexistente.jpg` |
+| 3b | **Código no válido** | ✅ | `02 · Caja/05 · Código no válido.jpg` |
+| 4 | Error de red + Reintentar | 🧩 mismo patrón que 3 | — |
+| 5 | **Cantidad máxima (999)**: + deshabilitado y error | ✅ | `02 · Caja/08 · Cantidad máxima.jpg` |
+| 6 | **Producto eliminado · Deshacer** (toast) | ✅ | `02 · Caja/11 · Producto eliminado/deshacer.jpg` |
+| 7 | **Modal finalizar venta** (finalizando…) | ✅ | `02 · Caja/13 · Finalizando venta.jpg` |
+| 8 | Venta finalizada | 🧩 `EmptyState` + `Money` | — |
+| 9 | **Modal vaciar venta** (destructivo) | ✅ | `02 · Caja/16 · Confirmar vaciar venta.jpg` |
+| 9b | Conectando con el servidor (arranque en frío de Render) | 🧩 `Spinner` + input deshabilitado | — |
+| 9c | **Cerrar sesión** con venta abierta | ✅ | `02 · Caja/17 · Confirmar cerrar sesión.jpg` |
+| 10 | Página de componentes | 🧩 inventario en §5 | — |
 
-Mismos nombres en Figma y en `src/index.css`. En código se usan **solo** vía clases (`bg-primary`, `text-total`), nunca valores arbitrarios ni `var()` en `className`.
+> Los códigos que aparecen en las capturas (`1001`, `1002`…) son de ejemplo: el catálogo real son 20 productos con EAN-13 (`84123450000xx`), ver el back.
+
+## 4. Design tokens y tipografía
+
+El archivo de Figma no define variables, así que los tokens los fija el código. Se han **medido sobre las capturas** de `docs/figma/` (color exacto de píxel) y se han **corregido solo donde no cumplían WCAG AA**. Nombres **semánticos** (por intención, no por color): si mañana cambia la marca, cambia el valor, no las clases.
+
+En código se usan **solo** vía clases (`bg-primary`, `text-ink-muted`, `text-total`), nunca valores arbitrarios ni `var()` en `className`.
+
+### 4.1 Color
+
+| Token | Valor | Uso | Contraste |
+|---|---|---|---|
+| `canvas` | `#f3f5f4` | Fondo de la app | — |
+| `surface` | `#ffffff` | Tarjetas, tabla, modales, cabecera | — |
+| `surface-muted` | `#f3f5f4` | Cabecera de la tabla | — |
+| `border` | `#dbe4df` | Bordes decorativos de tarjetas y separadores | — (decorativo) |
+| `border-strong` | `#758981` | Borde de inputs y botones secundarios | 3,7:1 sobre `surface` (≥ 3:1 de WCAG 1.4.11) · *ajustado: en Figma `#dbe4df` = 1,3:1* |
+| `ink` | `#172a24` | Texto principal, total | 15,1:1 |
+| `ink-muted` | `#52675e` | Texto secundario (ayudas, subtítulos) | 6,1:1 sobre `surface` · 5,5:1 sobre `canvas` |
+| `ink-subtle` | `#5f716a` | Texto terciario (barra de atajos, "Importes en euros") | 4,7:1 sobre `canvas` · *ajustado: en Figma `#798a84` = 3,3:1* |
+| `primary` | `#186342` | Acción principal, panel de marca, logo | blanco encima 7,2:1 |
+| `primary-hover` | `#124d33` | Hover/pressed de `primary` | blanco encima 9,8:1 |
+| `primary-subtle` | `#eaf5ed` | Fila "último añadido", fondo del avatar | `ink` encima 13,5:1 |
+| `on-primary` | `#ffffff` | Texto sobre `primary` y `danger` | — |
+| `danger` | `#a62627` | Acción destructiva, texto y borde de error | 7,2:1 (texto y blanco encima) |
+| `danger-hover` | `#8a1f20` | Hover/pressed de `danger` | blanco encima 9,1:1 |
+| `focus` | `#245bdc` | Anillo de foco (3 px) en todos los interactivos | 5,8:1 sobre `surface` |
+| `inverse` | `#172a24` | Fondo del toast (Deshacer) | blanco encima 15,1:1 |
+| `overlay` | `#172a24` al 60 % | Fondo tras los modales | — |
+
+### 4.2 Tipografía
+
+**Inter Variable** (autoalojada con `@fontsource-variable/inter`, sin peticiones a Google): sans geométrica pensada para pantalla, cifras muy legibles y con **`tabular-nums`** (todas las cifras miden lo mismo → columnas de importes alineadas). Fallback: `system-ui, sans-serif`.
+
+| Token | Tamaño / interlineado | Peso | Uso (frame) |
+|---|---|---|---|
+| `text-total` | 56 px / 1 | 700 | Total de la venta y del modal finalizar |
+| `text-display` | 48 px / 1,2 | 600 | Titular del panel de marca del login |
+| `text-title` | 28 px / 1,25 | 700 | "Venta en curso", "Entra en tu caja", título de modal |
+| `text-scan` | 18 px / 1,5 | 400 | Input de código y campos del login |
+| `text-body` | 18 px / 1,5 | 600 / 400 | Nombre del producto, importes de la tabla |
+| `text-sm` (Tailwind) | 14 px | 500 / 400 | Labels, subtítulos, botón secundario |
+| `text-xs` (Tailwind) | 12 px | 400 | Código bajo el producto, ayudas, barra de atajos |
+| `text-overline` | 11 px / 1,4, `uppercase`, `tracking-wide` | 600 | "TOTAL DE LA VENTA", "REVISAR VENTA", cabeceras de tabla |
+
+Importes y cantidades: siempre `tabular-nums` y alineados a la derecha.
+
+### 4.3 Forma, espacio y movimiento
+
+| Token | Valor | Uso |
+|---|---|---|
+| `radius-control` | 8 px | Inputs, botones, stepper |
+| `radius-card` | 12 px | Tarjetas, tabla |
+| `radius-modal` | 16 px | Modales |
+| `shadow-modal` | `0 24px 48px -12px rgb(23 42 36 / 0.25)` | Modales |
+| `spacing-target` | 44 px | Objetivo táctil mínimo (`min-h-target`, `min-w-target`) |
+| `spacing-control` | 56 px | Altura del input de código y de los botones grandes (Añadir, Finalizar) |
+| Espaciado | escala de Tailwind (4 · 8 · 12 · 16 · 24 · 32) | Igual que el Auto Layout del diseño |
+| Movimiento | 150 ms `ease-out`, siempre bajo `motion-safe:` | Hover, aparición de modal y toast, resaltado de "último añadido" |
+
+### 4.4 `@theme` resultante (`src/index.css`)
 
 ```css
 @import 'tailwindcss';
+@import '@fontsource-variable/inter';
 
 @theme {
-  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-sans: 'Inter Variable', system-ui, sans-serif;
 
-  --color-surface: #ffffff;        /* tarjetas, tabla */
-  --color-canvas: #f6f7f9;         /* fondo app */
-  --color-ink: #111827;            /* texto principal */
-  --color-ink-muted: #4b5563;      /* secundario, ≥ 4.5:1 sobre surface */
-  --color-primary: #15803d;        /* finalizar / éxito (blanco encima ≥ 4.5:1) */
-  --color-danger: #b91c1c;         /* eliminar / error */
-  --color-warning: #92400e;        /* avisos */
-  --color-focus: #2563eb;          /* anillo de foco */
-  --color-highlight: #fef9c3;      /* último añadido */
+  --color-canvas: #f3f5f4;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f3f5f4;
+  --color-border: #dbe4df;
+  --color-border-strong: #758981;
+  --color-ink: #172a24;
+  --color-ink-muted: #52675e;
+  --color-ink-subtle: #5f716a;
+  --color-primary: #186342;
+  --color-primary-hover: #124d33;
+  --color-primary-subtle: #eaf5ed;
+  --color-on-primary: #ffffff;
+  --color-danger: #a62627;
+  --color-danger-hover: #8a1f20;
+  --color-focus: #245bdc;
+  --color-inverse: #172a24;
+  --color-overlay: rgb(23 42 36 / 0.6);
 
-  --text-base: 1.125rem;           /* 18px tabla */
-  --text-scan: 1.375rem;           /* 22px input de código */
-  --text-total: 3.5rem;            /* 56px total */
+  --text-total: 3.5rem;
+  --text-total--line-height: 1;
+  --text-display: 3rem;
+  --text-display--line-height: 1.2;
+  --text-title: 1.75rem;
+  --text-title--line-height: 1.25;
+  --text-scan: 1.125rem;
+  --text-scan--line-height: 1.5;
+  --text-body: 1.125rem;
+  --text-body--line-height: 1.5;
+  --text-overline: 0.6875rem;
+  --text-overline--line-height: 1.4;
 
-  --spacing-target: 2.75rem;       /* 44px objetivo táctil mínimo → min-h-target min-w-target */
+  --radius-control: 0.5rem;
+  --radius-card: 0.75rem;
+  --radius-modal: 1rem;
+  --shadow-modal: 0 24px 48px -12px rgb(23 42 36 / 0.25);
+
+  --spacing-target: 2.75rem;
+  --spacing-control: 3.5rem;
 }
 ```
-- Espaciados, radios y sombras: escala por defecto de Tailwind (equivale al Auto Layout 4/8/12/16/24/32 de Figma).
-- Importes: `tabular-nums text-right`.
-- Foco: `focus-visible:ring-4 focus-visible:ring-focus` en todos los interactivos.
-- Animaciones con `motion-safe:` para respetar `prefers-reduced-motion`.
 
-## 5. Biblioteca de componentes (Figma ⇄ código)
+## 5. Design system (Atomic Design) y componentes de pantalla
 
-| Figma | Código | Variantes |
+Inventario sacado de los frames. Lo **genérico y sin negocio** va a `shared/components/ui/<nivel>/` (reglas en `CLAUDE.md` §2.4); lo **específico de la caja** va a `features/checkout/screen/components/` y se construye componiendo el design system.
+
+### 5.1 `shared/components/ui`
+
+| Nivel | Componente | Variantes / props | Dónde aparece |
+|---|---|---|---|
+| atom | `Button` | `primary` · `secondary` · `danger` · `ghost`; `md` · `lg`; `isLoading` ("Finalizando…"); `shortcut` (pinta un `Kbd`) e icono final opcional | Entrar en la caja, Añadir ⏎, Finalizar venta F12, Vaciar venta, Salir, botones de modal |
+| atom | `IconButton` | `neutral` · `danger`; `aria-label` obligatorio | Papelera, − / + del stepper |
+| atom | `Input` | `default` · `error` · `disabled`; `size` `md` · `lg` (código) | Código de producto, email, contraseña |
+| atom | `Label` | `required` opcional | "Código de producto", "Email" |
+| atom | `Badge` | `neutral` | "Abierta" |
+| atom | `Avatar` | iniciales | "AL" |
+| atom | `Kbd` | — | F12, ⏎, Ctrl Z, Esc |
+| atom | `Spinner` | `sm` · `md` | Botón cargando, conectando con el servidor |
+| atom | `Money` | `md` · `lg` · `total`; recibe **céntimos** | Precios, importes, total |
+| atom | `Overline` | — | "TOTAL DE LA VENTA", "REVISAR VENTA", "PUESTO DE CAJA" |
+| atom | `Card` | `padding` | Bloque del código, tabla, panel del total |
+| atom | `Logo` | `onPrimary` (sobre verde) | Cabecera y panel de marca |
+| molecule | `FormField` | `label`, `helperText`, `error` (icono + texto, `role="alert"`, `aria-describedby`) | Código de producto, email |
+| molecule | `PasswordField` | `FormField` + botón Mostrar/Ocultar | Contraseña |
+| molecule | `QuantityStepper` | normal · en mínimo · en máximo (999 deshabilita +) | Columna Cantidad |
+| molecule | `Alert` | `error` · `info` (inline) | Errores de red y del login |
+| molecule | `KeyValue` | — | "Estado · En curso" |
+| molecule | `ShortcutHint` | `Kbd` + etiqueta | "F12 Finalizar" |
+| molecule | `UserBadge` | `Avatar` + nombre + subtítulo | "Ana López · Sesión de cajero" |
+| molecule | `EmptyState` | icono, título, descripción | Venta vacía |
+| organism | `Modal` | `default` · `destructive`; `overline`, `title`, `description`, `children`, acciones; *focus trap*, `Esc`, devuelve el foco | Finalizar, vaciar, cerrar sesión |
+| organism | `AppHeader` | slots: marca, contexto ("Puesto de caja"), usuario, acciones | Cabecera de la caja |
+| organism | `ShortcutsBar` | lista de `ShortcutHint` + texto final | Pie de la caja |
+| organism | `DataTable` | piezas semánticas (`Table`, `Th`, `Tr`, `Td`) con cabecera `surface-muted` y fila `highlighted` | Tabla de la venta |
+| template | `AuthLayout` | `aside` (panel de marca) + `children` (formulario) | Login |
+| template | `AppLayout` | `header`, `main` (≈ 70 %), `aside` (≈ 30 %, fijo), `footer` | Caja |
+| — | Toast | `sonner` (`<Toaster />` en `core/providers`) con estilo `inverse` y acción | "Huevos camperos eliminados · Deshacer" |
+
+### 5.2 `features/*/screen/components` (negocio)
+
+| Componente | Compone | Estados |
 |---|---|---|
-| Button | `shared/components/ui/button` | `primary` · `secondary` · `danger` · `ghost`; `md` · `lg`; `isLoading`; slot de atajo (`Kbd`) |
-| IconButton | `shared/components/ui/icon-button` | `danger` (papelera), `neutral`; `aria-label` obligatorio |
-| Input | `shared/components/ui/input` | `default` · `error` · `disabled`; `label`, `error`, `helperText` (patrón task-manager) |
-| QuantityStepper | `shared/components/ui/quantity-stepper` | normal · en mínimo · en máximo |
-| Money | `shared/components/ui/money` | `md` · `lg` · `xl` (total) |
-| Alert (inline) | `shared/components/ui/alert` | `error` · `warning` · `info` |
-| Toast | `sonner` (`<Toaster />` en `core/providers`) | con acción (Deshacer) |
-| Modal | `shared/components/ui/modal` | `default` · `destructive` |
-| Kbd | `shared/components/ui/kbd` | etiqueta de atajo |
-| EmptyState | `shared/components/ui/empty-state` | — |
-| ScanForm | `checkout/screen/components/scan-form` | idle · loading · error · error de red |
-| SaleTable | `checkout/screen/components/sale-table` | vacía · con datos |
-| SaleLineRow | `checkout/screen/components/sale-line-row` | normal · seleccionada · recién añadida |
-| TotalPanel | `checkout/screen/components/total-panel` | vacío · con total |
-| FinalizeSaleModal | `checkout/screen/components/finalize-sale-modal` | — |
-| ClearSaleModal | `checkout/screen/components/clear-sale-modal` | destructivo |
-| SaleCompleted | `checkout/screen/components/sale-completed` | — |
-| ShortcutsBar | `checkout/screen/components/shortcuts-bar` | — |
+| `LoginForm` (auth) | `FormField`, `PasswordField`, `Button`, `Alert` | idle · cargando · credenciales incorrectas · sesión caducada |
+| `ScanForm` | `FormField` + `Button` | idle · cargando · código inexistente · código no válido · cantidad máxima · error de red |
+| `SaleTable` / `SaleLineRow` | `DataTable`, `Money`, `QuantityStepper`, `IconButton` | vacía · con datos · fila recién añadida |
+| `TotalPanel` | `Card`, `Overline`, `Money`, `KeyValue`, `Button` | vacío (Finalizar deshabilitado) · con total |
+| `FinalizeSaleModal` | `Modal`, `Money`, `Button` | revisar · finalizando |
+| `ClearSaleModal` | `Modal` `destructive` | — |
+| `LogoutModal` | `Modal` | — |
+| `SaleCompleted` | `EmptyState`, `Money`, `Button` | — |
 
 > **Fidelidad:** mismos nombres (PascalCase en Figma, kebab-case en carpetas), mismas variantes y mismos tokens. En la entrega se adjuntan capturas Figma vs app lado a lado.
 
 ## 6. Microcopy
 
+Fuente de verdad: los frames de Figma (textos literales). Lo marcado 🧩 no tiene frame y sigue el mismo tono.
+
 | Situación | Texto |
 |---|---|
-| Login: credenciales | "Email o contraseña incorrectos" |
-| Login: sesión caducada | "Tu sesión ha caducado. Vuelve a entrar." |
-| Arranque en frío | "Conectando con el servidor…" |
-| Cerrar sesión con venta | "La venta quedará abierta y podrás recuperarla al volver" |
-| Placeholder input | "Escanea o introduce un código" |
-| Código inexistente | "No existe ningún producto con el código {code}" |
-| Formato inválido | "Código no válido: solo números (4–14 dígitos)" |
-| Error de red | "No se pudo consultar el producto. Revisa la conexión y reintenta." |
-| Máximo alcanzado | "Cantidad máxima por producto: 999" |
-| Eliminado | "{name} eliminado" · acción "Deshacer" |
-| Finalizar (modal) | "¿Finalizar venta?" · "{n} artículos · Total {total}" · "Confirmar (Enter)" / "Cancelar (Esc)" |
-| Venta vacía | "Escanea un producto para empezar" |
-| Éxito | "Venta finalizada · {total}" |
+| Login: título · subtítulo | "Entra en tu caja" · "Introduce tus credenciales de cajero." |
+| Login: botón · pie | "Entrar en la caja" · "Acceso exclusivo para personal de caja" |
+| Login: panel de marca | "PUESTO DE CAJA" · "Todo listo. Vamos con la siguiente venta." · "Tu venta abierta te espera al volver a iniciar sesión." |
+| Login: credenciales 🧩 | "Email o contraseña incorrectos." |
+| Login: sesión caducada 🧩 | "Tu sesión ha caducado. Vuelve a entrar." |
+| Arranque en frío 🧩 | "Conectando con el servidor…" |
+| Input de código: label · placeholder · ayuda | "Código de producto" · "Escanea o escribe el código" · "Escanea un código y pulsa Enter. También puedes introducirlo manualmente." |
+| Código inexistente | "No existe ningún producto con el código {code}. Revisa el código." |
+| Código no válido | "Código no válido. Introduce entre 4 y 14 dígitos." |
+| Cantidad máxima | "Cantidad máxima por producto: 999. No se añadieron más unidades." |
+| Error de red 🧩 | "No se pudo consultar el producto. Revisa la conexión y reintenta." |
+| Eliminado (toast) | "{name} eliminados" · acción "Deshacer" |
+| Panel total | "TOTAL DE LA VENTA" · "{n} artículos · {m} productos" · "Estado · En curso" |
+| Modal finalizar | "REVISAR VENTA" · "¿Finalizar esta venta?" · "{n} artículos · {m} productos. Comprueba el total antes de confirmar." · "Volver a la venta" / "Finalizar venta" ("Finalizando…") |
+| Modal vaciar | "CANCELAR VENTA" · "¿Vaciar la venta?" · "Se eliminarán los {n} artículos de esta venta. Esta acción no se puede deshacer." · "Volver a la venta" / "Vaciar venta" |
+| Modal cerrar sesión | "CERRAR SESIÓN" · "¿Quieres salir de la caja?" · "La venta quedará abierta y podrás recuperarla al volver a iniciar sesión." · "Volver a la venta" / "Cerrar sesión" |
+| Venta vacía 🧩 | "Escanea un producto para empezar" |
+| Venta finalizada 🧩 | "Venta finalizada · {total}" |
+| Barra de atajos | "⏎ Añadir · F12 Finalizar · Ctrl Z Deshacer · Esc Cerrar diálogo" · "Importes en euros" |
 
 ## 7. Checklist de accesibilidad (WCAG 2.2 AA)
 - [ ] Contraste AA en todos los textos (comprobar en Figma con plugin Stark/Able).

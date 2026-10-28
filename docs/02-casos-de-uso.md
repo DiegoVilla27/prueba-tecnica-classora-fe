@@ -90,7 +90,7 @@ Cada CU indica qué piezas del código lo implementan y qué tests lo cubren.
 | B2 · Escribir 0, vacío o no numérico | Al salir del campo / `Enter` se restaura el valor anterior y aviso "Cantidad entre 1 y 999" |
 | B3 · Escribir > 999 | Se limita a 999 con aviso |
 
-**Implementación:** `shared/components/ui/quantity-stepper` · `useSaleStore.changeQuantity` · `models/quantity` (+ `QuantitySchema` Zod).
+**Implementación:** `shared/components/ui/molecules/quantity-stepper` · `useSaleStore.changeQuantity` · `models/quantity` (+ `QuantitySchema` Zod).
 **Tests:** unit (stepper, `changeLineQuantity`, store), integración (editar y comprobar total).
 
 ---
@@ -127,7 +127,7 @@ Cada CU indica qué piezas del código lo implementan y qué tests lo cubren.
 
 **Alternativos:** D1 · Cancelar → vuelve a la venta sin cambios. D2 · Error del backend → se mantiene la venta y se muestra el error con reintento; **nunca** se pierde la venta.
 
-**Implementación:** `screen/components/finalize-sale-modal` · `shared/components/ui/modal` · `use-sale-mutations` (`complete`) · `useSaleStore.setSale`.
+**Implementación:** `screen/components/finalize-sale-modal` · `shared/components/ui/organisms/modal` · `use-sale-mutations` (`complete`) · `useSaleStore.setSale`.
 **Tests:** unit (`completeSale`, store, botón deshabilitado), integración, E2E (flujo completo).
 
 ---

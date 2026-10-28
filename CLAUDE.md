@@ -57,7 +57,11 @@ src/
 │   ├── providers/             # QueryClientProvider + Toaster
 │   └── mocks/                 # browser worker + agregador de handlers
 ├── shared/                    # Reutilizable entre features, sin negocio
-│   ├── components/ui/         # Design system (button, input, modal, alert, kbd…) + index.ts barrel
+│   ├── components/ui/         # Design system con Atomic Design + index.ts barrel (ver §2.4)
+│   │   ├── atoms/             #   button, icon-button, input, label, badge, avatar, kbd, spinner, money, overline, card, logo
+│   │   ├── molecules/         #   form-field, password-field, quantity-stepper, alert, key-value, shortcut-hint, user-badge, empty-state
+│   │   ├── organisms/         #   modal, app-header, shortcuts-bar, data-table
+│   │   └── templates/         #   auth-layout, app-layout
 │   ├── hooks/                 # use-hotkeys, use-announcer, use-me…
 │   ├── utils/                 # cn, format-money, storage…
 │   └── mocks/server/          # setupServer para tests
@@ -104,7 +108,7 @@ e2e/                           # Specs Playwright
 |---|---|---|---|
 | **Screen** | named **y** default | `export const CheckoutScreen…; export default CheckoutScreen;` | default permite `React.lazy`; named para tests y la API pública |
 | **Componente de feature / screen** | named **y** default | `export const SaleTable…; export default SaleTable;` | El padre lo importa por default (`import SaleTable from './components/sale-table'`) como en task-manager |
-| **Componente de `shared/components/ui`** | **solo named** + barrel `ui/index.ts` (`export * from './button'`) | `import { Button, Modal } from '@shared/components/ui'` | Un único punto de entrada al design system |
+| **Componente de `shared/components/ui`** | **solo named** + un barrel por nivel (`atoms/index.ts`…) y el barrel raíz `ui/index.ts` (`export * from './atoms'`…) | `import { Button, Modal } from '@shared/components/ui'` | Un único punto de entrada al design system; el nivel atómico es organización interna, no se ve al importar |
 | **Hook** (de componente, screen, feature o shared) | **default** | `const useScanForm = () => {…}; export default useScanForm;` | Un hook por carpeta; el nombre lo pone quien importa |
 | **Schema Zod de formulario** | **default** | `export default ScanSchema;` | Uno por carpeta `schema/` |
 | **Store Zustand** | **default** (hook) + named (selectores, `initialSaleState`) | `export default useSaleStore; export const selectTotal…` | El hook es el módulo; selectores y estado inicial para tests |
@@ -130,7 +134,27 @@ main.tsx → core/router · core/providers → features → shared → core
 - `models/` es TypeScript puro: no importa React, Axios, Zustand ni services.
 - Los componentes **nunca** llaman a services ni a Axios: lo hacen sus **hooks** (TanStack Query / store).
 
-### 2.4 Flujo de datos
+### 2.4 Design system con Atomic Design (`shared/components/ui`)
+
+Todo componente visual **reutilizable y sin negocio** vive aquí, clasificado por nivel. Lo que solo tiene sentido en una pantalla (`ScanForm`, `SaleTable`, `TotalPanel`…) **no** va aquí: va en `features/x/screen/components/` y se construye **componiendo** piezas del design system.
+
+| Nivel | Qué es | Puede importar | Ejemplos |
+|---|---|---|---|
+| **atoms** | Pieza indivisible; envuelve un elemento HTML con tokens y variantes | Solo `@shared/utils` (`cn`, `format-money`) e iconos `lucide-react` | `Button`, `Input`, `Label`, `Badge`, `Kbd`, `Money`, `Spinner`, `Card` |
+| **molecules** | Combinación pequeña de átomos con **una** responsabilidad | atoms | `FormField` (label + input + ayuda/error), `QuantityStepper`, `Alert`, `UserBadge` |
+| **organisms** | Bloque completo de interfaz, todavía genérico | atoms, molecules | `Modal`, `AppHeader`, `ShortcutsBar`, `DataTable` |
+| **templates** | Esqueleto de página con *slots* (`children`/props), sin datos | atoms, molecules, organisms | `AuthLayout` (panel de marca + formulario), `AppLayout` (cabecera + 70/30 + barra de atajos) |
+| *pages* | Las **screens** de cada feature: rellenan un template con datos reales | todo lo anterior + hooks de la feature | `LoginScreen`, `CheckoutScreen` |
+
+Reglas:
+1. **Solo hacia abajo**: un nivel nunca importa de uno superior ni de su mismo nivel salvo composición evidente (un organismo puede usar otro organismo pequeño, nunca al revés). Se valida con `no-restricted-imports`.
+2. **Sin negocio ni datos**: nada de store, services, TanStack Query ni textos del dominio fijos; todo entra por **props**. Los textos llegan como props o `children`.
+3. **API consistente**: `variant` / `size` como uniones de strings con objetos `variants`/`sizes` dentro del componente; `className` opcional fusionado con `cn()`; `ref` como prop (React 19) y resto de props nativas propagadas (`...props`).
+4. **Accesible por defecto**: cada átomo trae su semántica (`<button type="button">`, `aria-*` obligatorios en `IconButton`, foco visible), para que la feature no tenga que acordarse.
+5. **Cada componente**: su carpeta kebab-case con `index.tsx` + `index.test.tsx` (render, variantes, teclado y `axe`), y lo que necesite dentro (`hooks/`).
+6. **Fidelidad**: el nombre PascalCase coincide con el componente de Figma; sus variantes, con las de las capturas de `docs/figma/`.
+
+### 2.5 Flujo de datos
 
 ```
 Componente (pinta) → su hook (orquesta) → TanStack Query → xxxSvc → httpService → axios
@@ -165,7 +189,7 @@ Componente (pinta) → su hook (orquesta) → TanStack Query → xxxSvc → http
 
 ## 5. Estilos con Tailwind v4
 
-- Tokens de Figma en `@theme` de `src/index.css` (`--color-primary`, `--color-danger`, `--text-total`…). Las clases usan esos tokens: `bg-primary`, `text-total`.
+- Tokens del design system en `@theme` de `src/index.css`, definidos en `docs/03-ux-ui.md` §4 a partir de las capturas de `docs/figma/` (`--color-primary`, `--color-danger`, `--text-total`…). Las clases usan esos tokens: `bg-primary`, `text-total`. Ningún color ni tamaño fuera de ellos.
 - **Prohibido**: valores arbitrarios (`text-[#ff0000]`, `w-[317px]`), `var()` en `className`, `@apply` para crear clases tipo BEM. Si algo se repite → componente o token.
 - Clases condicionales siempre con `cn()` de `@shared/utils/cn`.
 - Variantes como objetos `variants` / `sizes` dentro del componente (patrón `Button` de task-manager).

@@ -70,8 +70,16 @@ src/
 │   ├── providers/index.tsx                     # QueryClientProvider + <Toaster />
 │   └── mocks/{browser,handlers}/index.ts
 ├── shared/
-│   ├── components/ui/                          # button, icon-button, input, quantity-stepper, money,
-│   │   └── index.ts                            # alert, modal, kbd, empty-state, spinner (+ barrel)
+│   ├── components/ui/                          # Design system · Atomic Design (CLAUDE.md §2.4)
+│   │   ├── atoms/                              # button, icon-button, input, label, badge, avatar, kbd,
+│   │   │   └── index.ts                        #   spinner, money, overline, card, logo (+ barrel)
+│   │   ├── molecules/                          # form-field, password-field, quantity-stepper, alert,
+│   │   │   └── index.ts                        #   key-value, shortcut-hint, user-badge, empty-state
+│   │   ├── organisms/                          # modal, app-header, shortcuts-bar, data-table
+│   │   │   └── index.ts
+│   │   ├── templates/                          # auth-layout, app-layout
+│   │   │   └── index.ts
+│   │   └── index.ts                            # barrel raíz: export * from './atoms' …
 │   ├── hooks/{use-me, use-hotkeys, use-announcer}/index.ts(x)
 │   ├── utils/{cn, format-money, storage}/index.ts
 │   └── mocks/

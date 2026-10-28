@@ -3,15 +3,14 @@
 > **Orden global:** primero el backend completo y desplegado en dev (repo back, `docs/08-roadmap.md`); en paralelo el diseño en Figma; después el front contra la API real.
 > Cada hito termina con `typecheck + lint + format:check + test` en verde, una entrada en `AI_LOG.md` y un commit con Conventional Commits (cuando el usuario lo pida).
 
-## Hito 0 · Diseño (Figma) — en paralelo al back
-- [ ] Wireframes (login + caja, layout 70/30).
-- [ ] Variables de Figma = tokens del `@theme`.
-- [ ] Biblioteca de componentes con variantes (Auto Layout).
-- [ ] Frames 0–9c + prototipo del flujo principal.
-- [ ] Revisión de contraste, tamaños y foco.
+## Hito 0 · Diseño (Figma) ✅
+- [x] Diseño en Figma ([Classora TPV · Login y caja](https://www.figma.com/design/hbVVhN8sPqR56dLazj9IEy/Classora-TPV-%C2%B7-Login-y-caja)): login + caja 70/30, errores, cantidad máxima, deshacer y modales. Capturas en `docs/figma/`.
+- [x] Tokens y tipografía definidos en código (Figma no tiene variables), medidos sobre las capturas y ajustados a WCAG AA: `docs/03-ux-ui.md` §4.
+- [x] Inventario del design system con Atomic Design (`docs/03-ux-ui.md` §5, `CLAUDE.md` §2.4).
+- [x] Revisión de contraste: 2 colores corregidos (`ink-subtle`, `border-strong`). Estados sin frame (venta vacía, error de red, venta finalizada, arranque en frío) se construyen con el mismo sistema.
 
 ## Hito 1 · Setup — ~2 h
-- [ ] Vite + React 19 + TS, React Compiler, alias `@core` `@features` `@shared`, puerto 3000, modos `localhost`/`dev`/`prod` + script `local:mock`.
+- [ ] Vite + React 19 + TS, **React Compiler** (`babel-plugin-react-compiler` + regla de lint, comprobado en el build), alias `@core` `@features` `@shared`, puerto 3000, modos `localhost`/`dev`/`prod` + script `local:mock`.
 - [ ] Tailwind v4, `clsx`, `tailwind-merge`, `lucide-react`, `sonner`.
 - [ ] React Router 7, Zustand, TanStack Query, Axios, React Hook Form, `@hookform/resolvers`, Zod.
 - [ ] oxlint, Prettier, Husky + lint-staged + commitlint.
@@ -31,9 +30,10 @@
 - [ ] `use-current-sale`, `use-sale-mutations` (optimistas, `scope`).
 - [ ] `catalog` completo (services, mapper, `use-product-lookup`, mocks).
 
-## Hito 4 · Design system — ~2 h
-- [ ] Tokens `@theme` fieles a Figma.
-- [ ] `shared/components/ui` + barrel + unit.
+## Hito 4 · Design system (Atomic Design) — ~3 h
+- [ ] Tokens y tipografía de `docs/03-ux-ui.md` §4 en el `@theme` (Inter Variable autoalojada).
+- [ ] `shared/components/ui`: `atoms` → `molecules` → `organisms` → `templates`, cada nivel con su barrel + barrel raíz; tests de variantes, teclado y `axe`.
+- [ ] Regla `no-restricted-imports` que impide importar de un nivel superior.
 - [ ] `use-hotkeys`, `use-announcer`, `cn`, `format-money`.
 
 ## Hito 5 · Screen de caja — ~5 h
