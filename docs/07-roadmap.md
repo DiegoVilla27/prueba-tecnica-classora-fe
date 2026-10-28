@@ -9,14 +9,14 @@
 - [x] Inventario del design system con Atomic Design (`docs/03-ux-ui.md` §5, `CLAUDE.md` §2.4).
 - [x] Revisión de contraste: 2 colores corregidos (`ink-subtle`, `border-strong`). Estados sin frame (venta vacía, error de red, venta finalizada, arranque en frío) se construyen con el mismo sistema.
 
-## Hito 1 · Setup — ~2 h
-- [ ] Vite + React 19 + TS, **React Compiler** (`babel-plugin-react-compiler` + regla de lint, comprobado en el build), alias `@core` `@features` `@shared`, puerto 3000, modos `localhost`/`dev`/`prod` + script `local:mock`.
-- [ ] Tailwind v4, `clsx`, `tailwind-merge`, `lucide-react`, `sonner`.
-- [ ] React Router 7, Zustand, TanStack Query, Axios, React Hook Form, `@hookform/resolvers`, Zod.
-- [ ] oxlint, Prettier, Husky + lint-staged + commitlint.
-- [ ] Vitest (unit/integration, cobertura 80 %), RTL, user-event, jest-dom, MSW, Playwright (`mocked`/`full-stack`) + axe.
-- [ ] `core/` (axios, http, interceptors errors/jwt, errors, router + guards, environments, providers, mocks) y `shared/utils/storage`.
-- [ ] Dockerfile (build + nginx), `docker-compose.yml`, `vercel.json`, `.vscode/settings.json`.
+## Hito 1 · Setup ✅
+- [x] Vite 8 + React 19 + TS 6, **React Compiler** (`babel-plugin-react-compiler` 1.0 vía `@rolldown/plugin-babel`; reglas `react-compiler/*` en oxlint; comprobado en el build con `react.memo_cache_sentinel`), alias `@core` `@features` `@shared`, puerto 3000, modos `localhost`/`mock`/`dev`/`prod`.
+- [x] Tailwind v4 con los tokens de `docs/03-ux-ui.md` §4, Inter Variable autoalojada, `clsx`, `tailwind-merge`, `lucide-react`, `sonner`.
+- [x] React Router 7, Zustand, TanStack Query, Axios, React Hook Form, `@hookform/resolvers`, Zod.
+- [x] oxlint (reglas de dependencia y de Atomic Design como errores), Prettier, Husky + lint-staged + commitlint.
+- [x] Vitest (unit/integration, cobertura 80 %), RTL, user-event, jest-dom, MSW, axe-core; Playwright (`mocked`/`full-stack`) + `@axe-core/playwright` con un smoke test.
+- [x] `core/` (axios, http, interceptors errors/jwt con refresh único, `ApiError`, router + guards, environments, providers, mocks) y `shared/utils/{cn,storage}`. Pantallas de login y caja como marcadores (se construyen en los hitos 2 y 5).
+- [x] Dockerfile (build + nginx), `docker-compose.yml`, `vercel.json` (SPA + CSP), `.vscode/`.
 
 ## Hito 2 · Auth — ~2 h
 - [ ] `auth/services` + DTOs + handlers MSW.

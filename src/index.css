@@ -1,0 +1,50 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/inter';
+
+/*
+ * Design tokens (docs/03-ux-ui.md §4): measured on the Figma frames in docs/figma/ and
+ * adjusted to WCAG AA where needed. Components use them only through classes
+ * (bg-primary, text-ink-muted, text-total…), never with arbitrary values.
+ */
+@theme {
+  --font-sans: 'Inter Variable', system-ui, sans-serif;
+
+  --color-canvas: #f3f5f4;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f3f5f4;
+  --color-border: #dbe4df;
+  --color-border-strong: #758981;
+  --color-ink: #172a24;
+  --color-ink-muted: #52675e;
+  --color-ink-subtle: #5f716a;
+  --color-primary: #186342;
+  --color-primary-hover: #124d33;
+  --color-primary-subtle: #eaf5ed;
+  --color-on-primary: #ffffff;
+  --color-danger: #a62627;
+  --color-danger-hover: #8a1f20;
+  --color-focus: #245bdc;
+  --color-inverse: #172a24;
+  --color-overlay: rgb(23 42 36 / 0.6);
+
+  --text-total: 3.5rem;
+  --text-total--line-height: 1;
+  --text-display: 3rem;
+  --text-display--line-height: 1.2;
+  --text-title: 1.75rem;
+  --text-title--line-height: 1.25;
+  --text-scan: 1.125rem;
+  --text-scan--line-height: 1.5;
+  --text-body: 1.125rem;
+  --text-body--line-height: 1.5;
+  --text-overline: 0.6875rem;
+  --text-overline--line-height: 1.4;
+
+  --radius-control: 0.5rem;
+  --radius-card: 0.75rem;
+  --radius-modal: 1rem;
+  --shadow-modal: 0 24px 48px -12px rgb(23 42 36 / 0.25);
+
+  --spacing-target: 2.75rem;
+  --spacing-control: 3.5rem;
+}

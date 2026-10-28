@@ -1,0 +1,25 @@
+# Dependencies
+node_modules
+
+# Build and reports
+dist
+coverage
+playwright-report
+test-results
+blob-report
+playwright/.cache
+*.tsbuildinfo
+
+# Logs
+*.log
+
+# Editor / OS
+.DS_Store
+.idea
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# Local env overrides (the committed .env.<mode> files only hold public VITE_* values)
+.env.local
+.env.*.local

@@ -10,7 +10,7 @@
 | **dev** | Vercel, rama `dev` | Render `pos-api-dev` |
 | **prod** | Vercel, rama `main` | Render `pos-api-prod` |
 
-Archivos: `.env.localhost`, `.env.dev`, `.env.prod` (solo variables públicas `VITE_*`; nunca secretos, todo lo `VITE_*` acaba en el bundle).
+Archivos: `.env.localhost`, `.env.mock`, `.env.dev`, `.env.prod` y `.env.test` (Vitest) con solo variables públicas `VITE_*` (`VITE_ENV_NAME`, `VITE_API_URL`, `VITE_USE_MOCKS`): nunca secretos, todo lo `VITE_*` acaba en el bundle.
 
 ## 2. Docker
 

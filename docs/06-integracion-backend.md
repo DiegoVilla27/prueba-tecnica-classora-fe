@@ -7,7 +7,7 @@
 | Uso en el front | Endpoint | Dónde |
 |---|---|---|
 | Iniciar sesión | `POST /auth/login` | `auth/services` → `loginSvc` |
-| Renovar token | `POST /auth/refresh` | `core/interceptors/jwt` → `refreshSvc` |
+| Renovar token | `POST /auth/refresh` | `core/interceptors/jwt` (llamada directa, fuera de los interceptores) |
 | Cajero en cabecera | `GET /users/me` | `shared/hooks/use-me` |
 | Buscar producto | `GET /products/{code}` | `catalog/services` → `getProductByCodeSvc` |
 | Recuperar venta abierta | `GET /sales/current` | `checkout/hooks/use-current-sale` |
@@ -58,7 +58,7 @@ El back envía decimales (`0.95`); los mappers los pasan a céntimos (`Math.roun
 | Modo / entorno | `VITE_API_URL` | `VITE_USE_MOCKS` |
 |---|---|---|
 | `pnpm local` (`.env.localhost`) | `http://localhost:8080/api/v1` | `false` |
-| `pnpm local:mock` | — | `true` (MSW: desarrollo sin backend) |
+| `pnpm local:mock` (`.env.mock`) | — | `true` (MSW: desarrollo sin backend; el worker solo existe en este build) |
 | Docker (`docker-compose.yml`) | `http://localhost:8080/api/v1` | `false` |
 | Vercel **dev** (rama `dev`) | API Render dev | `false` |
 | Vercel **prod** (rama `main`) | API Render prod | `false` |

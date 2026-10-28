@@ -1,0 +1,11 @@
+{
+  "workbench.editor.customLabels.patterns": {
+    "**/index.{ts,tsx}": "${dirname}",
+    "**/index.test.{ts,tsx}": "${dirname} (test)",
+    "**/index.integration.test.{ts,tsx}": "${dirname} (integration)"
+  },
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "files.associations": { "*.css": "tailwindcss" }
+}

@@ -1,0 +1,3 @@
+# pnpm 11 blocks dependency build scripts by default: allow only the ones we need.
+allowBuilds:
+  msw: true

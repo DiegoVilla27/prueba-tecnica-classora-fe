@@ -42,7 +42,7 @@ Imports cortos, co-localización (componente + test + hook + schema) y la misma 
 
 - Screens cargadas con `React.lazy` (por eso exportan **default**) dentro de `<Suspense>`.
 - Tokens en `shared/utils/storage` (`TOKEN`, `REFRESH`), igual que task-manager.
-- `core/interceptors/jwt`: añade `Bearer`; ante 401 hace **un** `POST /auth/refresh` (las peticiones concurrentes esperan en cola) y reintenta; si falla → limpia sesión y navega a `/login?expired=1`.
+- `core/interceptors/jwt`: añade `Bearer`; ante 401 hace **un** `POST /auth/refresh` (las peticiones concurrentes esperan esa misma promesa) y reintenta una vez; si el refresh falla → limpia sesión y navega a `/login?expired=1`. El refresh se pide con una llamada Axios **directa** (no con `axiosInstance` ni con un service de `auth`): así no vuelve a pasar por los interceptores y `core` no depende de `features`. Un reintento que falla por otro motivo (500…) es un error normal y no cierra la sesión.
 - `shared/hooks/use-me`: `GET /users/me` (TanStack Query) para la cabecera ("Cajero: Ana López").
 
 > ⚠️ Tokens en `localStorage`, como en task-manager: es lo pragmático para una SPA en otro dominio que la API. El riesgo de XSS se mitiga con React (sin `dangerouslySetInnerHTML`) y CSP en Vercel. Alternativa más segura, para la entrevista: refresh token en cookie `HttpOnly` + `SameSite`.
@@ -66,9 +66,9 @@ src/
 │   │   ├── config/index.tsx                    # createBrowserRouter + lazy screens
 │   │   ├── private/index.tsx                   # PrivateGuard
 │   │   └── public/index.tsx                    # PublicGuard
-│   ├── environments/index.ts                   # { apiUrl, useMocks, envName }
-│   ├── providers/index.tsx                     # QueryClientProvider + <Toaster />
-│   └── mocks/{browser,handlers}/index.ts
+│   ├── environments/index.ts                   # { envName, apiUrl, useMocks }
+│   ├── providers/index.tsx                     # AppProviders (QueryClient + <Toaster />) · createQueryClient
+│   └── mocks/{browser,handlers}/index.ts        # worker MSW (solo en el build `mock`) · agregador de handlers
 ├── shared/
 │   ├── components/ui/                          # Design system · Atomic Design (CLAUDE.md §2.4)
 │   │   ├── atoms/                              # button, icon-button, input, label, badge, avatar, kbd,
@@ -82,9 +82,10 @@ src/
 │   │   └── index.ts                            # barrel raíz: export * from './atoms' …
 │   ├── hooks/{use-me, use-hotkeys, use-announcer}/index.ts(x)
 │   ├── utils/{cn, format-money, storage}/index.ts
-│   └── mocks/
-│       ├── server/index.ts                     # setupServer para tests
-│       └── data/index.ts                       # usuarios demo, tokens falsos
+│   ├── mocks/
+│   │   ├── server/index.ts                     # setupServer para tests
+│   │   └── data/index.ts                       # usuarios demo, tokens falsos
+│   └── test-utils/{render,axe}/index.ts(x)     # renderRoute (rutas reales + providers) · expectNoA11yViolations
 ├── features/
 │   ├── auth/
 │   │   ├── index.ts                            # export { LoginScreen, useLogout }

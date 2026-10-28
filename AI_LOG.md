@@ -122,3 +122,40 @@ Registro del uso de inteligencia artificial en el frontend. Es el entregable de 
   - **Roadmap:** hito 0 ✅; hito 1 con React Compiler detallado; hito 4 rehecho para Atomic Design.
 - **Decisiones / correcciones humanas:** Los tokens los define el proyecto (Figma no tiene variables). Atomic Design en `shared/components/ui`.
 - **Resultado:** Hito 0 completado. Commit `docs: close hito 0 with design tokens and atomic design system` y push a `origin/main`.
+
+### #09 · 2026-10-29 00:55 · Hito 1: setup del proyecto con React Compiler
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt (resumen):** Empezar el hito 1, con React Compiler sí o sí.
+- **Qué hizo la IA:**
+  - **Base:**
+    - Vite 8, React 19 y TypeScript 6 `strict` (con `noUncheckedIndexedAccess`), alias `@core`/`@features`/`@shared`, puerto 3000.
+    - Modos `localhost`/`mock`/`dev`/`prod` y `.env.test`; `index.html` en `lang="es"`.
+    - Tokens de `docs/03-ux-ui.md` §4 en el `@theme` e Inter Variable autoalojada.
+  - **React Compiler:**
+    - `babel-plugin-react-compiler` 1.0 (estable) vía `@rolldown/plugin-babel` y `reactCompilerPreset`. No el compilador en Rust, que la documentación marca como experimental.
+    - Sus reglas (`eslint-plugin-react-hooks`) corren en oxlint como `react-compiler/*`; comprobado con un componente de prueba que llama a `setState` en el render.
+    - Comprobado en el build: `react.memo_cache_sentinel` aparece en el bundle y en las dos pantallas.
+  - **Versiones:** `pnpm` instaló majors nuevas (React Router 8, TypeScript 7, Vitest 5, MSW 3). Se fijaron React Router 7, como pide el stack del `CLAUDE.md`, y las mismas majors de task-manager (TS 6, Vitest 4, MSW 2). `@babel/core` 7, para usar el mismo AST que el compilador.
+  - **Calidad:**
+    - oxlint con `react`, `typescript`, `oxc`, `jsx-a11y` e `import`. Las reglas de dependencia (§2.3) y los niveles de Atomic Design (§2.4) son errores de `no-restricted-imports`.
+    - Se desactivaron las reglas que chocan con convenciones ya decididas (export default + named, clase `StorageService`).
+    - Prettier, Husky + lint-staged + commitlint (probado: rechaza un mensaje no convencional).
+  - **`core/`:**
+    - `axiosInstance`, `httpService` y `ApiError` (distingue "sin respuesta" de un código HTTP).
+    - Interceptor de errores sin toasts globales.
+    - Interceptor JWT con **un único refresh** para 401 concurrentes, reintento una sola vez y cierre de sesión solo si falla el refresh.
+    - Router con `PublicGuard`/`PrivateGuard` y pantallas `lazy`; `AppProviders` + `createQueryClient`; MSW (worker + agregador).
+  - **`shared/`:** `cn`, `StorageService`, servidor MSW de tests, `renderRoute` y `expectNoA11yViolations` (axe-core).
+  - **Pantallas:** login y caja como marcadores, para que router y guards funcionen ya; se construyen en los hitos 2 y 5.
+  - **Tests:**
+    - 22 unitarios: utils, axios, http, `ApiError`, ambos interceptores (Bearer, refresh único con 2 peticiones concurrentes, sesión caducada, login 401 sin refresh), rutas y providers. Cobertura del 92 % en líneas y 86 % en ramas.
+    - Smoke e2e en Chromium con `@axe-core/playwright` (login en `es`, sin violaciones graves).
+  - **Entrega:**
+    - Dockerfile multi-stage (node 22 + nginx con fallback SPA y caché de `/assets`), probado con `docker compose`: `/` y `/login` dan 200.
+    - `vercel.json` con build según `VERCEL_ENV`, rewrite SPA, CSP limitada a las APIs de Render y cabeceras de seguridad. `.vscode/` con etiquetas de pestaña para los `index`.
+  - **Corrección propia:**
+    - El primer interceptor JWT cerraba la sesión si el **reintento** fallaba por otro motivo; se separó el refresh del reintento.
+    - El chunk de MSW (412 kB) salía en el build de prod; ahora la condición usa `import.meta.env` y Vite lo elimina.
+  - **Docs:** el `CLAUDE.md` decía `forwardRef` (React 19 usa `ref` como prop). `04`/`06` decían que el refresh usaba un service de `auth` (ahora es una llamada directa, para que `core` no dependa de `features`). Roadmap del hito 1 ✅.
+- **Decisiones / correcciones humanas:** React Compiler obligatorio.
+- **Resultado:** `typecheck`, `lint` (0 avisos), `format:check`, `test:unit`, `test:integration`, `build:prod`, `e2e` y Docker en verde. Commit `build: set up vite, react 19 with react compiler and core infrastructure` en `feature/hito-1-setup`, merge fast-forward a `main` y push.

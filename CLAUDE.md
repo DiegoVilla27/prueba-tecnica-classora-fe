@@ -19,8 +19,8 @@ Aplicación de **caja de supermercado** (React + TypeScript) usada de forma inte
 | Ámbito | Elección |
 |---|---|
 | Build | Vite · alias `@core`, `@features`, `@shared` · puerto 3000 · modos `localhost` / `dev` / `prod` (`.env.<modo>`) |
-| Routing | React Router 7 (`/login`, `/`) con guards público/privado (patrón task-manager) |
-| UI | React 19 + TypeScript `strict` + **React Compiler** |
+| Routing | React Router 7 (paquete `react-router`; `/login`, `/`) con guards público/privado (patrón task-manager) |
+| UI | React 19 + TypeScript `strict` + **React Compiler** (`babel-plugin-react-compiler` vía `@rolldown/plugin-babel`; sus reglas de `eslint-plugin-react-hooks` corren en oxlint como `react-compiler/*`) |
 | Venta en curso (copia local de la venta del servidor + estado de UI) | **Zustand** |
 | Peticiones, caché y mutaciones | **TanStack Query** (mutaciones de la venta serializadas con `scope`) |
 | HTTP | **Axios**: `core/axios` (instancia) + `core/http` (`httpService`) + `core/interceptors` (`errors`, `jwt` con refresh silencioso) |
@@ -32,7 +32,7 @@ Aplicación de **caja de supermercado** (React + TypeScript) usada de forma inte
 | Unit / integración | Vitest (proyectos `unit` e `integration`) + React Testing Library + `user-event` + `jest-dom` |
 | Mock de red | MSW (Node en tests, Worker en dev/e2e) |
 | E2E | Playwright + `@axe-core/playwright` |
-| Calidad | oxlint (plugins `react`, `typescript`, `oxc`, `jsx-a11y`, `import`) · Prettier · Husky + lint-staged · commitlint (Conventional Commits) |
+| Calidad | oxlint (plugins `react`, `typescript`, `oxc`, `jsx-a11y`, `import` + reglas del React Compiler; las reglas de dependencia de §2.3 y §2.4 son errores de lint) · Prettier · Husky + lint-staged · commitlint (Conventional Commits) |
 | Entrega | Dockerfile (build + nginx) · `docker-compose.yml` en la red `shared-network` · Vercel (`dev` → preview, `main` → production) · GitHub Actions |
 
 > **No aplica** (es una SPA con Vite): Server Components, Server Actions, Redux. Si una skill copiada de task-manager los menciona, se ignora esa parte.
@@ -233,7 +233,7 @@ Objetivo **WCAG 2.2 AA**. Skill de referencia: `react-a11y`.
 - TypeScript `strict`, **prohibido `any`** (`unknown` + narrowing). Prohibido `@ts-ignore`.
 - **Dinero en céntimos enteros** dentro del front; conversión solo en mappers; formato solo con `@shared/utils/format-money`.
 - Sin números mágicos: `constants/limits`. Sin textos sueltos: `constants/messages`.
-- Componentes funcionales con `React.FC` tipado o props tipadas; `forwardRef` en los `ui` que envuelven nativos.
+- Componentes funcionales con props tipadas. En React 19 `ref` es una prop más: los `ui` que envuelven nativos la reciben y la propagan, **sin** `forwardRef`.
 - **TSDoc** en APIs públicas (`core/http`, services, mappers, store, hooks compartidos). Skill: `web-tsdoc`.
 - Sin `console.log` en código entregado.
 - Componentes ≤ ~150 líneas; si crece, se extrae.

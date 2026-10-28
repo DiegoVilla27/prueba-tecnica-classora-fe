@@ -1,0 +1,281 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["react", "typescript", "oxc", "jsx-a11y", "import"],
+  "jsPlugins": [
+    {
+      "name": "react-compiler",
+      "specifier": "eslint-plugin-react-hooks"
+    }
+  ],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn"
+  },
+  "ignorePatterns": ["dist", "coverage", "public/mockServiceWorker.js", "playwright-report"],
+  "rules": {
+    "react/rules-of-hooks": "error",
+    "react/exhaustive-deps": "warn",
+    "react/only-export-components": [
+      "warn",
+      {
+        "allowConstantExport": true
+      }
+    ],
+    "react/react-in-jsx-scope": "off",
+    "typescript/no-explicit-any": "error",
+    "typescript/ban-ts-comment": "error",
+    "no-console": [
+      "error",
+      {
+        "allow": ["warn", "error"]
+      }
+    ],
+    "import/no-cycle": "error",
+    "react-compiler/static-components": "error",
+    "react-compiler/use-memo": "error",
+    "react-compiler/preserve-manual-memoization": "error",
+    "react-compiler/incompatible-library": "warn",
+    "react-compiler/immutability": "error",
+    "react-compiler/globals": "error",
+    "react-compiler/refs": "error",
+    "react-compiler/set-state-in-effect": "error",
+    "react-compiler/set-state-in-render": "error",
+    "react-compiler/error-boundaries": "error",
+    "react-compiler/purity": "error",
+    "react-compiler/unsupported-syntax": "warn",
+    "react-compiler/config": "error",
+    "react-compiler/gating": "error",
+    "import/no-named-as-default": "off",
+    "import/no-named-as-default-member": "off",
+    "import/no-unassigned-import": [
+      "warn",
+      {
+        "allow": ["**/*.css", "@testing-library/jest-dom/vitest"]
+      }
+    ],
+    "typescript/no-extraneous-class": "off"
+  },
+  "overrides": [
+    {
+      "files": ["src/core/router/config/**", "src/core/providers/**", "src/shared/test-utils/**"],
+      "rules": {
+        "react/only-export-components": "off"
+      }
+    },
+    {
+      "files": ["src/shared/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@features/*", "@features/**"],
+                "message": "shared no importa de features (CLAUDE.md §2.3)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "src/core/axios/**",
+        "src/core/http/**",
+        "src/core/errors/**",
+        "src/core/environments/**",
+        "src/core/interceptors/**",
+        "src/core/providers/**"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@features/*", "@features/**"],
+                "message": "core no importa de features; solo core/router carga sus screens (CLAUDE.md §2.3)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/features/*/models/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "react",
+                "message": "models es TypeScript puro (CLAUDE.md §2.3)."
+              },
+              {
+                "name": "axios",
+                "message": "models es TypeScript puro (CLAUDE.md §2.3)."
+              },
+              {
+                "name": "zustand",
+                "message": "models es TypeScript puro (CLAUDE.md §2.3)."
+              }
+            ],
+            "patterns": [
+              {
+                "group": ["**/services", "**/services/**", "**/store", "@core/**"],
+                "message": "models es TypeScript puro (CLAUDE.md §2.3)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/shared/components/ui/atoms/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "zustand",
+                "message": "El design system no tiene estado de negocio (CLAUDE.md §2.4)."
+              },
+              {
+                "name": "axios",
+                "message": "El design system no pide datos (CLAUDE.md §2.4)."
+              },
+              {
+                "name": "@tanstack/react-query",
+                "message": "El design system no pide datos (CLAUDE.md §2.4)."
+              }
+            ],
+            "patterns": [
+              {
+                "group": ["@features/**", "@core/**"],
+                "message": "El design system no depende de features ni de core (CLAUDE.md §2.4)."
+              },
+              {
+                "group": [
+                  "**/molecules",
+                  "**/molecules/**",
+                  "**/organisms",
+                  "**/organisms/**",
+                  "**/templates",
+                  "**/templates/**",
+                  "@shared/components/ui"
+                ],
+                "message": "Un átomo solo importa utils e iconos (CLAUDE.md §2.4)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/shared/components/ui/molecules/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "zustand",
+                "message": "El design system no tiene estado de negocio (CLAUDE.md §2.4)."
+              },
+              {
+                "name": "axios",
+                "message": "El design system no pide datos (CLAUDE.md §2.4)."
+              },
+              {
+                "name": "@tanstack/react-query",
+                "message": "El design system no pide datos (CLAUDE.md §2.4)."
+              }
+            ],
+            "patterns": [
+              {
+                "group": ["@features/**", "@core/**"],
+                "message": "El design system no depende de features ni de core (CLAUDE.md §2.4)."
+              },
+              {
+                "group": [
+                  "**/organisms",
+                  "**/organisms/**",
+                  "**/templates",
+                  "**/templates/**",
+                  "@shared/components/ui"
+                ],
+                "message": "Una molécula solo importa átomos (CLAUDE.md §2.4)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/shared/components/ui/organisms/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "zustand",
+                "message": "El design system no tiene estado de negocio (CLAUDE.md §2.4)."
+              },
+              {
+                "name": "axios",
+                "message": "El design system no pide datos (CLAUDE.md §2.4)."
+              },
+              {
+                "name": "@tanstack/react-query",
+                "message": "El design system no pide datos (CLAUDE.md §2.4)."
+              }
+            ],
+            "patterns": [
+              {
+                "group": ["@features/**", "@core/**"],
+                "message": "El design system no depende de features ni de core (CLAUDE.md §2.4)."
+              },
+              {
+                "group": ["**/templates", "**/templates/**", "@shared/components/ui"],
+                "message": "Un organismo solo importa átomos y moléculas (CLAUDE.md §2.4)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/shared/components/ui/templates/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "zustand",
+                "message": "El design system no tiene estado de negocio (CLAUDE.md §2.4)."
+              },
+              {
+                "name": "axios",
+                "message": "El design system no pide datos (CLAUDE.md §2.4)."
+              },
+              {
+                "name": "@tanstack/react-query",
+                "message": "El design system no pide datos (CLAUDE.md §2.4)."
+              }
+            ],
+            "patterns": [
+              {
+                "group": ["@features/**", "@core/**", "@shared/components/ui"],
+                "message": "Una plantilla solo compone niveles inferiores (CLAUDE.md §2.4)."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
