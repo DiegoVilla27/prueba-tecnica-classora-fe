@@ -23,11 +23,13 @@ const useLineActions = () => {
   const { changeQuantity, removeProduct, undoRemove } = useSaleMutations();
   const announce = useAnnouncer();
 
-  const setQuantity = (line: SaleLine, quantity: number) =>
+  const setQuantity = (line: SaleLine, quantity: number) => {
     changeQuantity.mutate(
       { productId: line.productId, quantity },
       { onError: () => toast.error(CHECKOUT_MESSAGES.changeFailed) },
     );
+    announce(CHECKOUT_TEXT.quantityChanged(line.name, quantity));
+  };
 
   /** Undoes the last removal. Returns `false` when there is nothing to undo. */
   const undo = (): boolean => {

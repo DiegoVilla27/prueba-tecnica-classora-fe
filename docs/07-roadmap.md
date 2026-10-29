@@ -45,10 +45,11 @@
 - [x] clear-sale-modal — CU-05 · barra de atajos + `F12`, `↑↓`, `+`/`-`, `Supr`, `Ctrl+Z`, `Esc` — CU-06.
 - [x] Integración I-01…I-12 + alternativos (17 tests) y e2e de la caja en `mocked` (4) y `full-stack` (2).
 
-## Hito 6 · E2E, accesibilidad y calidad — ~2 h
+## Hito 6 · E2E, accesibilidad y calidad ✅
 - [x] Specs Playwright (`mocked` y `full-stack`) + axe (adelantado en los hitos 2 y 5).
-- [ ] Revisión manual: solo teclado + VoiceOver.
-- [ ] Fidelidad Figma vs app (capturas).
+- [x] Auditoría en navegador: orden de Tab, foco visible, árbol accesible, zoom 200 % y tablet sin scroll horizontal. Mejoras: steppers sin `aria-live` (cantidad anunciada una vez) y `aria-keyshortcuts="F12"`.
+- [x] Checklist WCAG con evidencia y guion de VoiceOver (`docs/03-ux-ui.md` §7). Pasada real con VoiceOver hecha por el autor: correcta.
+- [x] Fidelidad Figma vs app: 9 comparativas en `docs/figma/vs-app/` contra la API real.
 
 ## Hito 7 · CI/CD y despliegue — ~2 h
 - [ ] Workflow `ci.yml` (quality, unit, integration, e2e mocked, e2e full-stack, build).

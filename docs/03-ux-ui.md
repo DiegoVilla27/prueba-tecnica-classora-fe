@@ -60,6 +60,8 @@ Capturas exportadas en [`docs/figma/`](figma/) (1366×768). ✅ = diseñado en F
 | 9c | **Cerrar sesión** con venta abierta | ✅ | `02 · Caja/17 · Confirmar cerrar sesión.jpg` |
 | 10 | Página de componentes | 🧩 inventario en §5 | — |
 
+> **Figma vs app**: cada frame junto a la app real (Chromium contra la API) en [`docs/figma/vs-app/`](figma/vs-app/) (01, 02, 04, 05, 08, 11, 13, 16, 17). Las únicas diferencias son de datos.
+
 > Los códigos que aparecen en las capturas (`1001`, `1002`…) son de ejemplo: el catálogo real son 20 productos con EAN-13 (`84123450000xx`), ver el back.
 
 ## 4. Design tokens y tipografía
@@ -248,15 +250,37 @@ Fuente de verdad: los frames de Figma (textos literales). Lo marcado 🧩 no tie
 | Barra de atajos | "⏎ Añadir · F12 Finalizar · Ctrl Z Deshacer · Esc Cerrar diálogo" · "Importes en euros" |
 
 ## 7. Checklist de accesibilidad (WCAG 2.2 AA)
-- [ ] Contraste AA en todos los textos (comprobar en Figma con plugin Stark/Able).
-- [ ] Foco visible (3 px `--color-focus`) en todos los interactivos.
-- [ ] `aria-live="polite"` para "producto añadido"; `role="alert"` para errores.
-- [ ] Tabla semántica (`<table>`, `<th scope>`), cantidades con `aria-label="Cantidad de Leche entera"`.
-- [ ] Botones de icono con `aria-label`.
-- [ ] Modal sobre `<dialog>` nativo (`showModal()`: fondo inerte, foco dentro), cierre con `Esc`, y la pantalla devuelve el foco al input.
-- [ ] Toda acción posible solo con teclado; orden de tabulación = orden visual.
-- [ ] Errores con icono + texto (no solo color) y vinculados al input (`aria-invalid`, `aria-describedby`).
-- [ ] Objetivos táctiles ≥ 44×44 px (`min-h-target`).
-- [ ] Animaciones bajo `motion-safe:`.
-- [ ] Zoom al 200 % sin pérdida de contenido ni scroll horizontal en 1366 px.
-- [ ] `lang="es"` en `<html>` y título de documento descriptivo.
+
+Estado tras la auditoría del hito 6 (Chromium + `axe` + árbol accesible de Playwright) y la pasada manual con VoiceOver del autor. ✅ comprobado.
+
+| Punto | Estado | Evidencia |
+|---|---|---|
+| Contraste AA en todos los textos | ✅ | Tokens calculados en §4.1 (2 colores corregidos); `axe` con contraste real en los e2e `login` y `checkout-keyboard-a11y` sin violaciones graves. Encontró y se corrigió el botón principal (2,08:1, fallo de `tailwind-merge`) |
+| Foco visible (3 px) en todos los interactivos | ✅ | Recorrido con Tab en login y caja: ningún interactivo sin anillo; en error el anillo pasa a rojo |
+| Anuncios `aria-live` | ✅ | Una sola región (`use-announcer`): "Leche entera 1L añadido. Cantidad 1", "Leche entera 1L, cantidad 3", "… eliminado". Los steppers ya no son regiones vivas (hacían ruido con varias filas) |
+| Errores con `role="alert"`, icono + texto, `aria-invalid` + `aria-describedby` | ✅ | `FormField`; tests de integración L-03, I-05 |
+| Tabla semántica | ✅ | `<table>` con `<caption>`, `<th scope="col">`, celdas con nombre; filas con `aria-selected` al navegar con ↑↓ |
+| Botones de icono con `aria-label` por línea | ✅ | "Eliminar Leche entera 1L", "Aumentar cantidad de …" |
+| Modal: fondo inerte, foco dentro, `Esc`, foco al cerrar | ✅ | `<dialog>` nativo con `showModal()`; foco inicial con `data-autofocus` (Enter confirma en finalizar, opción segura en vaciar/cerrar sesión); al cerrar, el foco vuelve al campo de código |
+| Todo con teclado, orden de Tab = orden visual | ✅ | Login: Email → Contraseña → Mostrar → Entrar. Caja: Salir → Código → Añadir → − / + / papelera por fila → Finalizar → Vaciar. Atajos: e2e `checkout-keyboard-a11y` |
+| Atajo declarado | ✅ | "Finalizar venta" con `aria-keyshortcuts="F12"` (la tecla visible no ensucia el nombre) |
+| Objetivos ≥ 44 × 44 px | ✅ | `min-h-target` / `size-target` en botones, stepper e inputs |
+| Animaciones bajo `motion-safe:` | ✅ | Transiciones de color y scroll suave del último añadido respetan `prefers-reduced-motion` |
+| Zoom 200 % sin scroll horizontal (1366 px) | ✅ | Viewport 683 × 384: sin scroll horizontal; el panel del total pasa debajo |
+| `lang="es"` y título descriptivo | ✅ | `index.html`; smoke e2e |
+| Lector de pantalla real (VoiceOver) | ✅ | Pasada manual del autor con el guion de §7.1 (Safari + VoiceOver): lecturas correctas |
+
+### 7.1 Guion de revisión con VoiceOver (macOS, ~5 min)
+
+1. `pnpm local:mock` y abrir `http://localhost:3000` en Safari. Activar VoiceOver con `Cmd + F5`.
+2. **Login**: Tab por los campos → debe leer "Email, campo de texto", "Contraseña, campo de texto seguro", "Mostrar contraseña, botón". Enviar vacío → lee "Introduce tu email.".
+3. Entrar con `cajero@pos.local` / `cajero1234` → el foco cae en "Código de producto, campo de texto".
+4. Escribir `8412345000010` + Enter → anuncia "Leche entera 1L añadido. Cantidad 1".
+5. Escribir `0000` + Enter → anuncia el error "No existe ningún producto con el código 0000…".
+6. `VO + U` → Puntos de referencia: banner, principal, complementario, información de contenido; Tablas: "Productos de la venta".
+7. En la tabla, Tab hasta "Aumentar cantidad de Leche entera 1L" y pulsar → anuncia "Leche entera 1L, cantidad 2".
+8. `F12` → lee el diálogo "¿Finalizar esta venta?" con su descripción; el foco está en "Finalizar venta". `Esc` vuelve al campo de código.
+9. Papelera → anuncia "… eliminado"; `Ctrl + Z` lo devuelve.
+
+Anotar en `AI_LOG.md` cualquier lectura confusa.
+

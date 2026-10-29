@@ -43,9 +43,9 @@ export const QuantityStepper = ({
       disabled={disabled}
       onClick={onDecrease}
     />
-    <output aria-live="polite" className="min-w-10 text-center text-body text-ink tabular-nums">
-      {value}
-    </output>
+    {/* Plain text, not a live region: with many rows every stepper would talk at once. The
+        screen announces changes once, through the app announcer. */}
+    <span className="min-w-10 text-center text-body text-ink tabular-nums">{value}</span>
     <IconButton
       variant="outline"
       aria-label={increaseLabel}

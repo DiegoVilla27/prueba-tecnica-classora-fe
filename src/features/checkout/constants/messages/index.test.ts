@@ -32,6 +32,7 @@ describe('Checkout: messages', () => {
     const texts = [
       CHECKOUT_TEXT.removed(name),
       CHECKOUT_TEXT.added(name, 2),
+      CHECKOUT_TEXT.quantityChanged(name, 3),
       CHECKOUT_TEXT.quantityLabel(name),
       CHECKOUT_TEXT.decreaseLabel(name),
       CHECKOUT_TEXT.increaseLabel(name),
@@ -45,6 +46,7 @@ describe('Checkout: messages', () => {
     expect(texts).toEqual([
       'Leche entera 1L eliminado',
       'Leche entera 1L añadido. Cantidad 2',
+      'Leche entera 1L, cantidad 3',
       'Cantidad de Leche entera 1L',
       'Reducir cantidad de Leche entera 1L',
       'Aumentar cantidad de Leche entera 1L',

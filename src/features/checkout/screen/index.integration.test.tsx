@@ -58,7 +58,10 @@ describe('Checkout: Screen Integration', () => {
     expect(path).toBe('/');
     expect(screen.getByText('Escanea un producto para empezar')).toBeInTheDocument();
     expect(input).toHaveFocus();
-    expect(screen.getByRole('button', { name: /Finalizar venta/ })).toBeDisabled();
+    const finalize = screen.getByRole('button', { name: 'Finalizar venta' });
+    expect(finalize).toBeDisabled();
+    expect(finalize).toHaveAttribute('aria-keyshortcuts', 'F12');
+    expect(finalize).toHaveAccessibleDescription('Añade productos para finalizar');
   });
 
   it('I-02: should recover the open sale with its lines and total', async () => {
@@ -203,6 +206,11 @@ describe('Checkout: Screen Integration', () => {
     // Act
     await user.click(screen.getByRole('button', { name: 'Aumentar cantidad de Leche entera 1L' }));
     await waitFor(() => expect(totalText()).toBe('2,85 €'));
+    await waitFor(() =>
+      expect(document.getElementById('app-announcer')).toHaveTextContent(
+        'Leche entera 1L, cantidad 3',
+      ),
+    );
     await user.click(screen.getByRole('button', { name: 'Eliminar Leche entera 1L' }));
     await findToast('Leche entera 1L eliminado');
     await user.click(screen.getByRole('button', { name: 'Deshacer' }));

@@ -61,6 +61,7 @@ export const CHECKOUT_TEXT = {
   completed: (total: number) => `Venta finalizada · ${formatMoney(total)}`,
   removed: (name: string) => `${name} eliminado`,
   added: (name: string, quantity: number) => `${name} añadido. Cantidad ${quantity}`,
+  quantityChanged: (name: string, quantity: number) => `${name}, cantidad ${quantity}`,
   quantityLabel: (name: string) => `Cantidad de ${name}`,
   decreaseLabel: (name: string) => `Reducir cantidad de ${name}`,
   increaseLabel: (name: string) => `Aumentar cantidad de ${name}`,

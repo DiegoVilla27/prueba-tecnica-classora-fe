@@ -37,8 +37,14 @@ export const TotalPanel = ({ onFinalize, onClear }: TotalPanelProps) => {
           size="lg"
           disabled={!canComplete}
           aria-describedby={canComplete ? undefined : hintId}
+          // The shortcut is declared for assistive tech; the visible key stays out of the name.
+          aria-keyshortcuts="F12"
           onClick={onFinalize}
-          endSlot={<Kbd tone="onPrimary">F12</Kbd>}
+          endSlot={
+            <Kbd tone="onPrimary" aria-hidden="true">
+              F12
+            </Kbd>
+          }
         >
           {CHECKOUT_COPY.finalize}
         </Button>

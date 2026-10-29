@@ -274,3 +274,33 @@ Registro del uso de inteligencia artificial en el frontend. Es el entregable de 
 - **Docs:** `CLAUDE.md` §4, `02` (A4, A6, A7, B1–B4, CU-04), `04` (árbol), `05` (e2e) y roadmap (hito 5 ✅, e2e del hito 6 adelantados).
 - **Decisiones / correcciones humanas:** Ninguna.
 - **Resultado:** Commit `feat(checkout): add the checkout screen with scan queue, modals and shortcuts` en `feature/hito-5-checkout-screen`, merge fast-forward a `main` y push.
+
+### #14 · 2026-10-29 17:30 · Hito 6: auditoría de accesibilidad y fidelidad con Figma
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt (resumen):** Empezar el hito 6.
+- **Qué hizo la IA:**
+  - **Auditoría en Chromium:**
+    - orden de Tab en login y caja, lógico e igual al visual;
+    - foco visible en cada interactivo;
+    - árbol accesible completo (lo que recibe un lector de pantalla);
+    - zoom al 200 % (683 px) y tablet (1024 px) sin scroll horizontal.
+  - **Mejoras que salieron del árbol accesible:**
+    - Cada `QuantityStepper` era una región `aria-live` (`<output>`), así que con varias filas cada cambio sonaba suelto ("3"). Ahora es texto normal y la cantidad se anuncia una sola vez por el anunciador: "Leche entera 1L, cantidad 3".
+    - "Finalizar venta F12" tenía la tecla dentro del nombre accesible. Ahora usa `aria-keyshortcuts="F12"` y la tecla visible es `aria-hidden`.
+    - Hay aserciones nuevas para ambas cosas en la integración.
+  - **Fidelidad:**
+    - 9 capturas de la app contra la API real, una por frame (01, 02, 04, 05, 08, 11, 13, 16, 17). Para "Finalizando…" se retrasó `PATCH /complete` con `page.route`, que contra MSW no es posible.
+    - Compuestas junto a Figma en `docs/figma/vs-app/`: solo difieren los datos de ejemplo.
+  - **Checklist WCAG** en `docs/03-ux-ui.md` §7 con la evidencia de cada punto, más un **guion de VoiceOver** para la pasada manual.
+- **Límite declarado:** la IA no puede escuchar VoiceOver: la pasada real queda para el autor (👤 en la checklist).
+- **Observación:** en la BD local faltan las ventas anteriores a las 17:04, incluidas las de pruebas de la IA de la mañana. El front no puede borrar ventas; se avisó al usuario por si fue una limpieza manual. Las ventas de las capturas quedaron cerradas.
+- **Verificación:** 134 unitarios, 25 de integración, `build:prod`, e2e `mocked` 7/7 y `full-stack` 4/4 (puerto 3000 libre antes de empezar).
+- **Decisiones / correcciones humanas:** Ninguna.
+- **Resultado:** Hecho; ver #15.
+
+### #15 · 2026-10-29 17:45 · Revisión manual con VoiceOver
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt (resumen):** El usuario no conocía VoiceOver; pidió cómo hacerlo y después confirmó que lo ve bien.
+- **Qué hizo la IA:** Explicó VoiceOver paso a paso: `Cmd + F5`, navegar con `Tab` y leer el panel de subtítulos en lugar de escuchar. Dio una tabla de lo que debía leer en cada paso. Con la confirmación del usuario, marcó el punto como revisado en la checklist (`docs/03-ux-ui.md` §7) y en el roadmap.
+- **Decisiones / correcciones humanas:** El autor hizo la pasada manual con VoiceOver: sin incidencias.
+- **Resultado:** Hito 6 completo, sin puntos pendientes. Commit `feat(a11y): audit accessibility and compare the app with figma` en `feature/hito-6-a11y-quality`, merge fast-forward a `main` y push.
