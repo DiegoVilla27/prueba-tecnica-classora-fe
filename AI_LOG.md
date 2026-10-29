@@ -7,12 +7,24 @@ Registro del uso de inteligencia artificial en el frontend. Es el entregable de 
 ### Herramientas
 | Herramienta | Uso |
 |---|---|
-| Claude Code (Claude Opus 5.5) | Análisis del enunciado, documentación, reglas del agente y skills; implementación y tests (próximos hitos) |
+| Claude Code (Claude Opus 5.5) | Análisis del enunciado, documentación, reglas del agente y skills; implementación de los hitos 1–8, tests, revisión visual y de accesibilidad en navegador, CI/CD y despliegue |
+| Conector de Figma | Intento de leer el archivo (límite del plan Starter): el diseño se trabajó con capturas exportadas por el autor |
+| Playwright (scripts de la IA) | Capturas para comparar con Figma, auditoría de teclado y árbol accesible, GIF de la demo |
 
 ### Dónde ayudó
-- Análisis del PDF: requisitos, casos de uso, plan de trabajo.
-- Documentación de negocio, UX/UI, arquitectura, testing e integración.
-- Reglas del agente (`CLAUDE.md`) y skills, extraídas de la forma de trabajo del autor en `task-manager-client`.
+- Documentación, reglas (`CLAUDE.md`) y skills extraídas de `task-manager-client`.
+- Implementación por hitos con tests: setup con React Compiler, login, lógica de la venta (TDD), design system con Atomic Design, pantalla de caja, CI con e2e contra la API real.
+- Tokens medidos sobre las capturas de Figma con cálculo de contraste WCAG.
+
+### Fallos que se encontraron (y cómo)
+| Fallo | Cómo se detectó | Solución |
+|---|---|---|
+| Botón principal con contraste 2,08:1 (`tailwind-merge` eliminaba `text-on-primary`) | `axe` en un e2e con navegador real | Registrar la escala tipográfica en `extendTailwindMerge` + tests |
+| Se perdían escaneos rápidos (`reset()` de RHF + React Compiler) | Revisión visual en Chromium; jsdom no lo reproducía | `setValue` + `clearErrors`, regla en `CLAUDE.md`, e2e a velocidad de lector |
+| `Enter` en "Finalizar" cancelaba (foco en el primer botón del `<dialog>`) | e2e del flujo completo | `data-autofocus` tras `showModal()` |
+| El campo de código no recibía el foco al cargar | Test de integración I-01 | Foco al habilitarse |
+| Los e2e "full-stack" corrieron contra MSW durante varios hitos | Al recuperar una venta tras recargar daba 0 filas | Error de proceso de la IA (servidores de Vite huérfanos): se mataron, se paran por puerto y se repitieron contra la API real |
+| Tests intermitentes (texto duplicado en toast y `aria-live`; `axe` midiendo animaciones) | Repetir la batería varias veces | Consultas acotadas al toast; excluir toasts del análisis |
 
 ### Decisiones y correcciones humanas principales
 | Qué propuso la IA | Qué decidió el autor | Por qué |
@@ -20,9 +32,14 @@ Registro del uso de inteligencia artificial en el frontend. Es el entregable de 
 | Estructura genérica (`domain/`, `ui/`) | Arquitectura modular por features con `screen/`, `services/` (dtos + mappers), hooks y componentes a nivel de feature y de screen | Convención propia, más cohesión |
 | Archivos con nombre propio | Un módulo = una carpeta = `index.tsx` | Imports sin repetir nombres |
 | `useReducer` + Context | **Zustand** | Selecciones atómicas, menos boilerplate, su stack habitual |
-| CSS Modules | **Tailwind CSS v4** | Su stack habitual; tokens de Figma en `@theme` |
+| CSS Modules | **Tailwind CSS v4** | Su stack habitual |
 | `fetch` propio | Axios + `httpService` + interceptores | Patrón de task-manager |
 | — | Formularios con **React Hook Form + Zod**; regla explícita de exports default/named; accesibilidad como requisito | Indicaciones del autor |
+| — | **React Compiler** obligatorio | Indicación del autor |
+| Componentes de UI en una carpeta plana | **Atomic Design** en `shared/components/ui` | Indicación del autor |
+| Leer las variables de Figma | Tokens y tipografía definidos por el proyecto | El archivo no tenía variables |
+| — | Valores simples para los secretos de los entornos efímeros; dominios `classora-tpv-dev/prod` en Vercel | Decisión del autor (configuró Vercel y Render) |
+| — | Pasada manual con VoiceOver | La hizo el autor: correcta |
 
 ---
 
@@ -324,3 +341,31 @@ Registro del uso de inteligencia artificial en el frontend. Es el entregable de 
   - **Docs:** `08` y `06` con las URLs reales y el job `full-stack`; roadmap (hito 7 ✅).
 - **Decisiones / correcciones humanas:** El usuario configuró Vercel (dominios `classora-tpv-prod` y `classora-tpv-dev`) y Render.
 - **Resultado:** PR #1 (`feature/hito-7-ci-cd` → `dev`) y PR `dev` → `main` mergeados con el CI en verde; primer despliegue de `dev` en Vercel.
+
+### #17 · 2026-10-29 19:00 · Primer despliegue de dev y producción verificados
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt (resumen):** Llevar el hito 7 hasta `main`; el usuario desactivó la Deployment Protection de Vercel.
+- **Qué hizo la IA:**
+  - Subió los docs al PR #1, esperó el CI (verde, más la preview de Vercel) y lo mergeó en `dev`. Abrió el PR #2 `dev` → `main`, con el CI en verde, y lo mergeó.
+  - **Producción:** bundle contra `pos-api-prod`, login OK.
+  - **Dev:** respondía 302 a `vercel.com/sso-api`, por la Deployment Protection de Vercel, que protege las previews. Se dio el paso a paso para desactivarla; ahora responde 200 y el bundle va contra `pos-api-dev`.
+  - El primer login en dev mostró "No se pudo conectar con el servidor…" porque la API de dev estaba dormida (arranque en frío): es el mensaje previsto para ese caso. Al repetir, todo funcionó: login, escaneo de leche ×2 y bolsa ×3 con total 2,20 €, y la venta de prueba vaciada.
+  - Nota de la Deployment Protection añadida en `docs/08-despliegue.md`.
+- **Decisiones / correcciones humanas:** El usuario desactivó la Deployment Protection.
+- **Resultado:** Front desplegado y verificado en dev y prod. Esta entrada y la nota de `08` van en el PR del hito 8 (`main` está protegida).
+
+### #18 · 2026-10-29 19:40 · Hito 8: entrega
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt (resumen):** Empezar el hito 8.
+- **Qué hizo la IA:**
+  - **GIF del flujo** (`docs/demo/checkout.gif`, 277 KB): login, escaneos, código inexistente, +, eliminar y deshacer, F12 y nueva venta. Hecho con capturas de Playwright y Pillow, sin instalar `ffmpeg` en el equipo del autor.
+  - **README final:**
+    - URLs y cajeros demo por entorno, aviso del arranque en frío, códigos para probar y atajos;
+    - **tabla de entregables por parte del enunciado** y la sección **Integración con el backend Java (Parte 3)** con el recorrido de `GET /products/{code}` por ambas capas;
+    - arquitectura, cómo ejecutar, calidad, CI/CD y decisiones.
+    - Comprobó las anclas y los enlaces de Swagger (prod respondió al segundo intento por el arranque en frío).
+  - **`AI_LOG` revisado:** el resumen era de antes de implementar; ahora recoge herramientas, **fallos encontrados y cómo** (incluido el error de proceso de la IA con los e2e full-stack) y decisiones humanas. Numeración #01–#18 continua.
+  - **Back** (rama `feature/delivery-frontend-links`): README y `docs/07` con el front y el CORS por entorno; su `AI_LOG` #28 corregido y #29 nuevo.
+  - **Roadmap:** hito 8 ✅.
+- **Decisiones / correcciones humanas:** Ninguna.
+- **Resultado:** Commit y PR hasta `main` en los dos repos con el CI en verde; proyecto entregado.

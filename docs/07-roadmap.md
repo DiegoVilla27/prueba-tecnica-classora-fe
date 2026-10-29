@@ -57,10 +57,11 @@
 - [x] Dominios añadidos al CORS del back (Render dev y prod), verificados con preflight; login real en la web de producción.
 - [x] Rama `dev` + protección de `main` y `dev` (PR obligatorio + `🛡️ Frontend CI Quality Gate`).
 
-## Hito 8 · Entrega
-- [ ] README: URLs dev/prod, credenciales demo, cómo ejecutar (local, docker), arquitectura, decisiones, GIF.
-- [ ] Enlace a Figma.
-- [ ] `AI_LOG.md` revisado (resumen + entradas).
+## Hito 8 · Entrega ✅
+- [x] README: URLs dev/prod, credenciales demo, códigos para probar, cómo ejecutar (local, mock, docker), entregables por parte del enunciado, integración con el back (Parte 3), arquitectura, calidad, CI/CD, decisiones y GIF (`docs/demo/checkout.gif`).
+- [x] Enlace a Figma + comparativas Figma vs app.
+- [x] `AI_LOG.md` revisado: resumen actualizado (herramientas, fallos encontrados y cómo, decisiones humanas) y entradas #01–#18.
+- [x] Back: README y `docs/07` enlazan el front y documentan el CORS por entorno.
 
 ## Futuro (YAGNI hoy, para la entrevista)
 Pagos (efectivo con cambio, tarjeta) · ticket · IVA por producto · promociones · búsqueda manual por nombre · modo offline (IndexedDB + cola de sincronización) · refresh token en cookie `HttpOnly` · multi-caja · devoluciones · i18n · tema alto contraste · sonido de escaneo.
