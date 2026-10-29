@@ -304,3 +304,23 @@ Registro del uso de inteligencia artificial en el frontend. Es el entregable de 
 - **Qué hizo la IA:** Explicó VoiceOver paso a paso: `Cmd + F5`, navegar con `Tab` y leer el panel de subtítulos en lugar de escuchar. Dio una tabla de lo que debía leer en cada paso. Con la confirmación del usuario, marcó el punto como revisado en la checklist (`docs/03-ux-ui.md` §7) y en el roadmap.
 - **Decisiones / correcciones humanas:** El autor hizo la pasada manual con VoiceOver: sin incidencias.
 - **Resultado:** Hito 6 completo, sin puntos pendientes. Commit `feat(a11y): audit accessibility and compare the app with figma` en `feature/hito-6-a11y-quality`, merge fast-forward a `main` y push.
+
+### #16 · 2026-10-29 18:30 · Hito 7: CI/CD, Vercel y CORS
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt (resumen):** Empezar el hito 7. El usuario creó el proyecto en Vercel, los dominios y el CORS en Render siguiendo las instrucciones, y pidió el paso a paso de Render.
+- **Qué hizo la IA:**
+  - **`ci.yml`** con el estilo de task-manager (sin filtro de rutas, Sonar ni Discord):
+    - comprobación de la rama de origen de los PR a `main`, Prettier, oxlint y `tsc`;
+    - unit con cobertura, integración, e2e `mocked` con axe y build de producción;
+    - **e2e `full-stack`**: PostgreSQL 16 como servicio con las credenciales del perfil `local` del back, más la imagen del back construida desde su repo y arrancada con `--network host`. Cada PR del front se prueba así contra la API real.
+    - Todo confluye en `🛡️ Frontend CI Quality Gate`. Verde a la primera en el PR #1.
+  - **Ramas:** creó `dev` desde `main` y protegió `main` y `dev` con `gh` (PR obligatorio, check del quality gate, también para admins).
+  - **Vercel** (instrucciones y verificación):
+    - `ENABLE_EXPERIMENTAL_COREPACK=1` para usar pnpm 11.
+    - Producción en https://classora-tpv-prod.vercel.app: 200, CSP del `vercel.json`, fallback SPA y bundle contra `pos-api-prod` sin MSW.
+    - El aviso "No Deployment" de `dev` se debe a que la rama se creó antes que el proyecto y se arregla con el primer merge.
+  - **CORS:** valores exactos por servicio y paso a paso de Render. Verificado con preflight: los orígenes de Vercel permitidos y uno ajeno con 403. Prod sigue aceptando `localhost` (el usuario lo dejó; opcional quitarlo).
+  - **Prueba real:** login en la web de producción con el cajero de prod, sin errores.
+  - **Docs:** `08` y `06` con las URLs reales y el job `full-stack`; roadmap (hito 7 ✅).
+- **Decisiones / correcciones humanas:** El usuario configuró Vercel (dominios `classora-tpv-prod` y `classora-tpv-dev`) y Render.
+- **Resultado:** PR #1 (`feature/hito-7-ci-cd` → `dev`) y PR `dev` → `main` mergeados con el CI en verde; primer despliegue de `dev` en Vercel.

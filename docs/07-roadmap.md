@@ -51,11 +51,11 @@
 - [x] Checklist WCAG con evidencia y guion de VoiceOver (`docs/03-ux-ui.md` §7). Pasada real con VoiceOver hecha por el autor: correcta.
 - [x] Fidelidad Figma vs app: 9 comparativas en `docs/figma/vs-app/` contra la API real.
 
-## Hito 7 · CI/CD y despliegue — ~2 h
-- [ ] Workflow `ci.yml` (quality, unit, integration, e2e mocked, e2e full-stack, build).
-- [ ] Proyecto Vercel (prod = `main`, preview = `dev`) + variables + dominio estable de dev.
-- [ ] Dominios añadidos al CORS del back.
-- [ ] Rama `dev` + protección de ramas.
+## Hito 7 · CI/CD y despliegue ✅
+- [x] Workflow `ci.yml` (static checks, unit, integración, e2e mocked, **e2e full-stack contra la imagen real del back + PostgreSQL**, build → quality gate). Verde a la primera en el PR #1.
+- [x] Proyecto Vercel: prod = `main` → https://classora-tpv-prod.vercel.app · dev = `dev` → https://classora-tpv-dev.vercel.app; `ENABLE_EXPERIMENTAL_COREPACK=1`.
+- [x] Dominios añadidos al CORS del back (Render dev y prod), verificados con preflight; login real en la web de producción.
+- [x] Rama `dev` + protección de `main` y `dev` (PR obligatorio + `🛡️ Frontend CI Quality Gate`).
 
 ## Hito 8 · Entrega
 - [ ] README: URLs dev/prod, credenciales demo, cómo ejecutar (local, docker), arquitectura, decisiones, GIF.
