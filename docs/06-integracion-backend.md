@@ -17,6 +17,8 @@
 | Eliminar línea | `DELETE /sales/{id}/lines/{lineId}` | ídem |
 | Finalizar | `PATCH /sales/{id}/complete` | ídem |
 | Vaciar | `PATCH /sales/{id}/cancel` + `POST /sales` | ídem |
+| Historial de ventas | `GET /sales?page&size` | `sales-history/hooks/use-sales-page` |
+| Detalle de una venta | `GET /sales/{id}` | `sales-history/hooks/use-sale-detail` |
 
 ## 2. Errores
 

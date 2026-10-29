@@ -10,7 +10,7 @@
 
 Caja de supermercado para la prueba técnica de **Classora Technologies**: el cajero inicia sesión, escanea productos por código y gestiona la venta contra una **API Java real** ([`prueba-tecnica-classora-be`](https://github.com/DiegoVilla27/prueba-tecnica-classora-be)). Prioridades: **rapidez de uso, legibilidad, accesibilidad y prevención de errores**.
 
-![Flujo de caja: login, escaneos, error de código, cantidad, eliminar y deshacer, finalizar con F12](docs/demo/checkout.gif)
+![Flujo de caja: login, escaneos, error de código, eliminar y deshacer, finalizar con F12, venta nueva automática e historial con el detalle](docs/demo/checkout.gif)
 
 ---
 
@@ -25,6 +25,8 @@ Caja de supermercado para la prueba técnica de **Classora Technologies**: el ca
 > ⏳ La API usa el plan gratuito de Render: tras 15 min sin uso se duerme y **el primer acceso puede tardar ~50 s**. La app lo avisa ("No se pudo conectar con el servidor. Puede tardar hasta un minuto en arrancar…" en el login, "Conectando con el servidor…" en la caja): basta con reintentar.
 
 **Códigos para escanear** (catálogo de 20 productos EAN-13): `8412345000010` Leche · `8412345000027` Pan · `8412345000034` Huevos · `8412345000041` Aceite · `8412345000119` Bolsa. Con multiplicador: `6*8412345000010`. Uno inexistente: `0000`.
+
+**Historial**: pestaña **Ventas** de la cabecera (`/ventas`), con el detalle de cada venta.
 
 **Atajos**: `Enter` añadir · `F12` finalizar · `↑ ↓` seleccionar línea · `+ -` cantidad · `Supr` eliminar · `Ctrl+Z` deshacer · `Esc` cerrar / deseleccionar.
 
@@ -47,7 +49,9 @@ Caja de supermercado para la prueba técnica de **Classora Technologies**: el ca
 - **Escaneo**: el campo de código siempre tiene el foco; un lector puede disparar códigos sin pausa (cola en orden, verificada con un e2e a velocidad de lector). Multiplicador `N*código`.
 - **Venta optimista**: cada acción se ve al instante y se reconcilia con el servidor; si falla, vuelve atrás y avisa. El servidor es la fuente de verdad de precios y totales.
 - **Líneas**: − / + (máximo 999), eliminar con **Deshacer** (sin modales que frenen), último añadido resaltado.
-- **Finalizar** (F12, `Enter` confirma) y **vaciar** (confirmación destructiva); la venta abierta **se recupera** al recargar o al volver a iniciar sesión.
+- **Finalizar** (F12, `Enter` confirma): se abre **sola una venta nueva** con el panel a 0 y un aviso del importe cobrado. **Vaciar** con confirmación destructiva. La venta abierta **se recupera** al recargar o al volver a iniciar sesión.
+- **Historial de ventas** (`/ventas`): tabla paginada con fecha, estado, artículos, productos y total; **Ver** abre el detalle con sus líneas.
+- **Pantalla completa**: la tabla y el panel del total llegan hasta el final de la ventana; la lista hace scroll por dentro con la cabecera fija.
 - **Accesible**: WCAG 2.2 AA, todo con teclado, anuncios para lectores de pantalla, revisado con `axe` y VoiceOver ([checklist](docs/03-ux-ui.md#7-checklist-de-accesibilidad-wcag-22-aa)).
 
 ---
@@ -89,12 +93,13 @@ src/
 ├── core/        axios · http · interceptors (jwt, errors) · router + guards · providers · mocks
 ├── shared/      components/ui (design system) · hooks (use-hotkeys, use-announcer) · utils · test-utils
 └── features/
-    ├── auth/      login, sesión (useMe, useLogout)
-    ├── catalog/   producto por código
-    └── checkout/  models (reglas puras) · store (Zustand) · services · hooks (mutaciones) · screen (la caja)
+    ├── auth/           login, sesión (useMe, useLogout), cabecera común con pestañas Caja · Ventas
+    ├── catalog/        producto por código
+    ├── checkout/       models (reglas puras) · store (Zustand) · services · hooks (mutaciones) · screen (la caja)
+    └── sales-history/  historial paginado (GET /sales) y detalle de cada venta (GET /sales/{id})
 ```
 
-- **Design system con Atomic Design** en `shared/components/ui`: 26 piezas (`atoms` → `molecules` → `organisms` → `templates`) sin negocio, con tokens medidos sobre Figma y verificadas con `axe`. Las reglas de qué nivel puede importar a cuál son **errores de lint**.
+- **Design system con Atomic Design** en `shared/components/ui`: 27 piezas (`atoms` → `molecules` → `organisms` → `templates`) sin negocio, con tokens medidos sobre Figma y verificadas con `axe`. Las reglas de qué nivel puede importar a cuál son **errores de lint**.
 - **Estado**: TanStack Query para el servidor; Zustand para la venta en pantalla (venta confirmada + cambios optimistas + estado de UI). La lógica de negocio son funciones puras en `models/` (mismas reglas que el agregado del back).
 - **React Compiler** activo (sin `useMemo`/`useCallback` a mano), con sus reglas en el linter.
 
@@ -124,10 +129,10 @@ docker compose up --build -d   # build de producción servido con nginx en :3000
 
 | Nivel | Qué | Cifras |
 | :-- | :-- | :-- |
-| Unit | Modelos, store, servicios, hooks, design system (con `axe`) | 134 tests · cobertura ~88 % líneas / 83 % ramas |
-| Integración | Login y caja completos contra MSW (I-01…I-12 y alternativos) | 25 tests |
-| E2E mocked | Escaneo rápido, código inexistente, deshacer, todo con teclado + `axe` | 7 specs |
-| E2E full-stack | Login, venta completa y **recuperar la venta tras recargar** contra la API real | 4 specs |
+| Unit | Modelos, store, servicios, hooks, design system (con `axe`) | 149 tests · cobertura ~88 % líneas / 83 % ramas |
+| Integración | Login, caja (I-01…I-12 y alternativos) e historial completos contra MSW | 30 tests |
+| E2E mocked | Escaneo rápido, código inexistente, deshacer, todo con teclado, historial + `axe` | 8 specs |
+| E2E full-stack | Login, venta completa que aparece en el historial y **recuperar la venta tras recargar**, contra la API real | 4 specs |
 
 Además: auditoría de orden de tabulación, foco visible, árbol accesible y zoom 200 %; pasada manual con VoiceOver.
 

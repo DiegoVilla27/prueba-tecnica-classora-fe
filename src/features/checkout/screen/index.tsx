@@ -1,6 +1,6 @@
-import { AppLayout, Badge, ShortcutsBar } from '@shared/components/ui';
-import { CHECKOUT_COPY } from '../constants/messages';
-import CheckoutHeader from './components/checkout-header';
+import { SessionHeader } from '@features/auth';
+import { Alert, AppLayout, Badge, Card, ShortcutsBar, Spinner } from '@shared/components/ui';
+import { CHECKOUT_COPY, CHECKOUT_TEXT } from '../constants/messages';
 import ClearSaleModal from './components/clear-sale-modal';
 import FinalizeSaleModal from './components/finalize-sale-modal';
 import LogoutModal from './components/logout-modal';
@@ -27,18 +27,21 @@ export const CheckoutScreen = () => {
   return (
     <>
       <AppLayout
-        header={<CheckoutHeader onLogout={screen.requestLogout} />}
+        header={<SessionHeader onLogout={screen.requestLogout} />}
         aside={<TotalPanel onFinalize={screen.openFinalize} onClear={screen.openClear} />}
         footer={
-          <ShortcutsBar
-            label={CHECKOUT_COPY.shortcutsLabel}
-            shortcuts={SHORTCUTS}
-            trailing={CHECKOUT_COPY.shortcutsTrailing}
-          />
+          // Shortcuts are for a physical keyboard: not shown on phones.
+          <div className="hidden md:block">
+            <ShortcutsBar
+              label={CHECKOUT_COPY.shortcutsLabel}
+              shortcuts={SHORTCUTS}
+              trailing={CHECKOUT_COPY.shortcutsTrailing}
+            />
+          </div>
         }
       >
         <div className="flex items-center gap-4">
-          <h1 className="text-title font-bold text-ink">{CHECKOUT_COPY.title}</h1>
+          <h1 className="text-2xl font-bold text-ink sm:text-title">{CHECKOUT_COPY.title}</h1>
           {screen.isWorking && <Badge>{CHECKOUT_COPY.statusOpen}</Badge>}
         </div>
 
@@ -46,7 +49,16 @@ export const CheckoutScreen = () => {
           <ServerStatus isError={currentSale.isError} onRetry={currentSale.retry} />
         )}
 
-        {screen.isCompleted ? (
+        {screen.completedTotal !== null && (
+          <Alert variant="success">{CHECKOUT_TEXT.completedNext(screen.completedTotal)}</Alert>
+        )}
+
+        {screen.isCompleted && screen.isStartingNext ? (
+          <Card padding="lg">
+            <Spinner label={CHECKOUT_COPY.openingNext} />
+          </Card>
+        ) : screen.isCompleted ? (
+          // Fallback: the new sale could not be opened (no connection); the cashier retries.
           <SaleCompleted
             total={screen.total}
             onNewSale={screen.startNext}

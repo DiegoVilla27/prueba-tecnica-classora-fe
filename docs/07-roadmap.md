@@ -63,5 +63,11 @@
 - [x] `AI_LOG.md` revisado: resumen actualizado (herramientas, fallos encontrados y cómo, decisiones humanas) y entradas #01–#18.
 - [x] Back: README y `docs/07` enlazan el front y documentan el CORS por entorno.
 
+## Mejoras tras la entrega ✅ (peticiones del autor)
+- [x] Al finalizar, **venta nueva automática** (panel a 0, foco en el campo) con aviso del total cobrado hasta el primer escaneo; respaldo con "Nueva venta" si no se puede abrir.
+- [x] **Altura completa**: tabla y panel del total hasta el final de la pantalla, scroll interno con cabecera fija, botones al fondo.
+- [x] **Historial de ventas** (`/ventas`, CU-09): tabla paginada con estado, artículos, productos y total; modal con el detalle. Requiere `GET /sales` (nuevo en el back). Cabecera común con pestañas Caja · Ventas.
+- [x] **Responsive en móvil**: cabecera en dos filas compactas, filas de tabla apiladas, escaneo a una columna, sin barra de atajos y tipografía grande reducida; sin scroll horizontal desde 320 px.
+
 ## Futuro (YAGNI hoy, para la entrevista)
 Pagos (efectivo con cambio, tarjeta) · ticket · IVA por producto · promociones · búsqueda manual por nombre · modo offline (IndexedDB + cola de sincronización) · refresh token en cookie `HttpOnly` · multi-caja · devoluciones · i18n · tema alto contraste · sonido de escaneo.

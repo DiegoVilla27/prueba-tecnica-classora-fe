@@ -37,10 +37,10 @@ test.describe('Checkout (mocked)', () => {
     await expect(page.getByRole('dialog', { name: '¿Finalizar esta venta?' })).toBeVisible();
     await page.keyboard.press('Enter');
 
-    // Assert: success, then a new empty sale with the field focused
+    // Assert: straight to a new empty sale (total 0) with the paid total in a notice
     await expect(page.getByRole('main').getByText(/Venta finalizada · 3,85/)).toBeVisible();
-    await page.getByRole('button', { name: 'Nueva venta' }).click();
     await expect(page.getByText('Escanea un producto para empezar')).toBeVisible();
+    await expect.poll(() => totalText(page)).toBe('0,00 €');
     await expect(codeField(page)).toBeFocused();
   });
 

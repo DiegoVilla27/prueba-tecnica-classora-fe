@@ -23,7 +23,13 @@ export const TotalPanel = ({ onFinalize, onClear }: TotalPanelProps) => {
   const hintId = useId();
 
   return (
-    <Card as="section" padding="lg" aria-labelledby={titleId} className="flex flex-col gap-4">
+    // Full height of the side panel: the actions sit at the bottom, as in the Figma frames.
+    <Card
+      as="section"
+      padding="lg"
+      aria-labelledby={titleId}
+      className="flex h-full flex-col gap-4"
+    >
       <Overline id={titleId}>{CHECKOUT_COPY.totalTitle}</Overline>
       <Money cents={total} size="total" />
       <p className="text-body text-ink-muted">{CHECKOUT_TEXT.summary(items, lines)}</p>
@@ -32,7 +38,7 @@ export const TotalPanel = ({ onFinalize, onClear }: TotalPanelProps) => {
         label={CHECKOUT_COPY.stateLabel}
         value={CHECKOUT_COPY.stateValue}
       />
-      <div className="mt-8 flex flex-col gap-3">
+      <div className="mt-auto flex flex-col gap-3 pt-8">
         <Button
           size="lg"
           disabled={!canComplete}

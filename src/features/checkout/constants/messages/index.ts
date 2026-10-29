@@ -46,6 +46,7 @@ export const CHECKOUT_COPY = {
   logoutDescription: 'La venta quedará abierta y podrás recuperarla al volver a iniciar sesión.',
   logoutConfirm: 'Cerrar sesión',
   completedTitle: 'Venta finalizada',
+  openingNext: 'Abriendo la siguiente venta…',
   newSale: 'Nueva venta',
   undo: 'Deshacer',
 } as const;
@@ -59,6 +60,8 @@ export const CHECKOUT_TEXT = {
   clearDescription: (items: number) =>
     `${items === 1 ? 'Se eliminará el artículo' : `Se eliminarán los ${items} artículos`} de esta venta. Esta acción no se puede deshacer.`,
   completed: (total: number) => `Venta finalizada · ${formatMoney(total)}`,
+  completedNext: (total: number) =>
+    `Venta finalizada · ${formatMoney(total)}. Ya puedes escanear la siguiente.`,
   removed: (name: string) => `${name} eliminado`,
   added: (name: string, quantity: number) => `${name} añadido. Cantidad ${quantity}`,
   quantityChanged: (name: string, quantity: number) => `${name}, cantidad ${quantity}`,

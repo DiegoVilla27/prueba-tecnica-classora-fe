@@ -23,4 +23,16 @@ describe('UI: Alert', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(error);
     expect(screen.getByRole('status')).toHaveTextContent(info);
   });
+
+  it('should announce a success politely with its check icon', () => {
+    // Arrange
+    const message = 'Venta finalizada · 14,94 €';
+
+    // Act
+    const { container } = render(<Alert variant="success">{message}</Alert>);
+
+    // Assert
+    expect(screen.getByRole('status')).toHaveTextContent(message);
+    expect(container.querySelector('svg')).toHaveClass('lucide-circle-check');
+  });
 });

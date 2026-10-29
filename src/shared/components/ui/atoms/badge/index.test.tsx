@@ -15,4 +15,21 @@ describe('UI: Badge', () => {
     // Assert
     expect(screen.getByText(label)).toHaveClass('border-border', 'text-xs');
   });
+
+  it('should colour the status tones', () => {
+    // Arrange
+    const labels = ['Finalizada', 'Cancelada'];
+
+    // Act
+    render(
+      <>
+        <Badge tone="success">{labels[0]}</Badge>
+        <Badge tone="danger">{labels[1]}</Badge>
+      </>,
+    );
+
+    // Assert
+    expect(screen.getByText('Finalizada')).toHaveClass('text-primary');
+    expect(screen.getByText('Cancelada')).toHaveClass('text-danger');
+  });
 });

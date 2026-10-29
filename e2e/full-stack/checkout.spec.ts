@@ -31,10 +31,18 @@ test.describe('Checkout (full-stack)', () => {
     await page.keyboard.press('F12');
     await page.keyboard.press('Enter');
 
-    // Assert
+    // Assert: a new empty sale opens on its own, the paid total stays in a notice
     await expect(page.getByRole('main').getByText(/Venta finalizada · 2,20/)).toBeVisible();
-    await page.getByRole('button', { name: 'Nueva venta' }).click();
     await expect(page.getByText('Escanea un producto para empezar')).toBeVisible();
+    await expect.poll(() => totalText(page)).toBe('0,00 €');
+
+    // The sale is in the history with its lines
+    await page.getByRole('link', { name: 'Ventas' }).click();
+    const latestCompleted = page.locator('tbody tr', { hasText: 'Finalizada' }).first();
+    await expect(latestCompleted).toContainText('2,20');
+    await latestCompleted.getByRole('button', { name: /Ver detalle/ }).click();
+    await expect(page.getByRole('dialog')).toContainText('Leche entera 1L');
+    await expect(page.getByRole('dialog')).toContainText('Bolsa de papel');
   });
 
   test('checkout-recover-sale: the open sale survives a reload', async ({ page }) => {

@@ -34,7 +34,9 @@ export const QuantityStepper = ({
   disabled = false,
   className,
 }: QuantityStepperProps) => (
-  <fieldset className={cn('m-0 inline-flex min-w-0 items-center gap-2 border-0 p-0', className)}>
+  <fieldset
+    className={cn('m-0 inline-flex min-w-0 items-center gap-1 border-0 p-0 sm:gap-2', className)}
+  >
     <legend className="sr-only">{label}</legend>
     <IconButton
       variant="outline"
@@ -45,7 +47,7 @@ export const QuantityStepper = ({
     />
     {/* Plain text, not a live region: with many rows every stepper would talk at once. The
         screen announces changes once, through the app announcer. */}
-    <span className="min-w-10 text-center text-body text-ink tabular-nums">{value}</span>
+    <span className="min-w-8 text-center text-body text-ink tabular-nums sm:min-w-10">{value}</span>
     <IconButton
       variant="outline"
       aria-label={increaseLabel}

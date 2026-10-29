@@ -12,8 +12,10 @@ export interface UserBadgeProps {
 /** Avatar + name + role of the signed-in person (Figma: UserBadge). */
 export const UserBadge = ({ name, initials, description, className }: UserBadgeProps) => (
   <div className={cn('flex items-center gap-3', className)}>
-    <Avatar initials={initials} />
-    <div className="flex flex-col">
+    {/* Phones only fit the brand and "Salir": the avatar appears from sm. */}
+    <Avatar initials={initials} className="hidden sm:grid" />
+    {/* Visually hidden on small screens (only the avatar fits) but always read aloud. */}
+    <div className="sr-only md:not-sr-only md:flex md:flex-col">
       <span className="text-sm font-semibold text-ink">{name}</span>
       {description && <span className="text-xs text-ink-muted">{description}</span>}
     </div>

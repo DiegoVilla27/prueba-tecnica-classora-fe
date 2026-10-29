@@ -14,7 +14,7 @@ export interface MoneyProps {
 const sizes: Record<MoneySize, string> = {
   md: 'text-body',
   lg: 'text-body font-semibold',
-  total: 'text-total font-bold tracking-tight',
+  total: 'text-[2.5rem] font-bold tracking-tight sm:text-total',
 };
 
 /** Euro amount with tabular figures, so columns of amounts line up (Figma: Money). */
