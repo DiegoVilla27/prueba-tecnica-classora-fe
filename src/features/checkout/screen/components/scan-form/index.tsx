@@ -15,8 +15,9 @@ export const ScanForm = ({ disabled = false }: ScanFormProps) => {
 
   return (
     <Card as="section" padding="lg" aria-label={CHECKOUT_COPY.scanLabel}>
-      <form onSubmit={submit} noValidate className="flex items-start gap-3">
-        <div className="flex-1">
+      {/* Below sm the button goes under the field, full width, so the field keeps its size. */}
+      <form onSubmit={submit} noValidate className="flex flex-col gap-3 sm:flex-row sm:items-start">
+        <div className="min-w-0 flex-1">
           <FormField
             id={SCAN_INPUT_ID}
             label={CHECKOUT_COPY.scanLabel}
@@ -34,7 +35,7 @@ export const ScanForm = ({ disabled = false }: ScanFormProps) => {
         <Button
           type="submit"
           size="lg"
-          className="mt-7"
+          className="w-full sm:mt-7 sm:w-auto"
           disabled={disabled}
           endSlot={<CornerDownLeft aria-hidden="true" className="size-5" />}
         >

@@ -65,7 +65,10 @@ export const Button = ({
     {...props}
   >
     {isLoading && <LoaderCircle aria-hidden="true" className="size-5 motion-safe:animate-spin" />}
-    <span>{isLoading && loadingText ? loadingText : children}</span>
+    {/* inline-flex: an icon inside the label stays on the same line as the text */}
+    <span className="inline-flex items-center gap-1">
+      {isLoading && loadingText ? loadingText : children}
+    </span>
     {!isLoading && endSlot}
   </button>
 );

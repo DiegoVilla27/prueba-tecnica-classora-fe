@@ -57,6 +57,52 @@ export const toSaleResponse = (sale: MockSale): SaleResponseDto => {
   };
 };
 
+/**
+ * One page of the history as `GET /sales` returns it: summaries, newest first.
+ *
+ * @param page - Zero-based page.
+ * @param size - Page size.
+ */
+export const listMockSalesPage = (page: number, size: number) => {
+  const newestFirst = [...sales].reverse();
+  const content = newestFirst.slice(page * size, page * size + size).map((sale) => {
+    const response = toSaleResponse(sale);
+    return {
+      id: response.id,
+      status: response.status,
+      itemCount: response.itemCount,
+      lineCount: response.lines.length,
+      total: response.total,
+      createdAt: response.createdAt,
+      closedAt: response.closedAt,
+    };
+  });
+  return {
+    content,
+    page,
+    size,
+    totalElements: sales.length,
+    totalPages: Math.ceil(sales.length / size),
+  };
+};
+
+/**
+ * Seeds a closed sale (for the history tests).
+ *
+ * @param lines - `[code, quantity]` pairs.
+ * @param status - `COMPLETED` or `CANCELLED`.
+ * @returns The API response of the seeded sale.
+ */
+export const seedClosedSale = (
+  lines: [code: string, quantity: number][],
+  status: 'COMPLETED' | 'CANCELLED' = 'COMPLETED',
+): SaleResponseDto => {
+  const sale = openMockSale();
+  lines.forEach(([code, quantity]) => addMockLine(sale, code, quantity));
+  closeMockSale(sale, status);
+  return toSaleResponse(sale);
+};
+
 export const findOpenSale = (): MockSale | undefined =>
   sales.find(({ status }) => status === 'OPEN');
 

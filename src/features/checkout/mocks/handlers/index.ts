@@ -6,6 +6,7 @@ import {
   findMockProduct,
   findOpenSale,
   findSale,
+  listMockSalesPage,
   openMockSale,
   toSaleResponse,
   touch,
@@ -33,6 +34,21 @@ const isValidQuantity = (quantity: unknown): quantity is number =>
 const handlersCheckout = [
   http.get('*/sales/current', () => {
     const sale = findOpenSale();
+    return sale ? HttpResponse.json(toSaleResponse(sale)) : saleNotFound();
+  }),
+
+  // Sales history (newest first) and the detail of one sale.
+  http.get('*/sales', ({ request }) => {
+    const params = new URL(request.url).searchParams;
+    const size = Number(params.get('size') ?? 20);
+    if (!Number.isInteger(size) || size < 1 || size > 100) {
+      return apiError(400, 'Bad Request', 'Size must be between 1 and 100');
+    }
+    return HttpResponse.json(listMockSalesPage(Number(params.get('page') ?? 0), size));
+  }),
+
+  http.get('*/sales/:saleId', ({ params }) => {
+    const sale = findSale(String(params.saleId));
     return sale ? HttpResponse.json(toSaleResponse(sale)) : saleNotFound();
   }),
 

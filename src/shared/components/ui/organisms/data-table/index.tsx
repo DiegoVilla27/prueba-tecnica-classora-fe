@@ -28,8 +28,16 @@ export const DataTable = ({ caption, className, children, ...props }: DataTableP
   </table>
 );
 
-export const DataTableHead = ({ className, ...props }: ComponentProps<'thead'>) => (
-  <thead className={cn('bg-surface-muted', className)} {...props} />
+export interface DataTableHeadProps extends ComponentProps<'thead'> {
+  /** Keeps the header visible while the rows scroll inside their container. */
+  isSticky?: boolean;
+}
+
+export const DataTableHead = ({ isSticky = false, className, ...props }: DataTableHeadProps) => (
+  <thead
+    className={cn('bg-surface-muted', isSticky && 'sticky top-0 z-10', className)}
+    {...props}
+  />
 );
 
 export const DataTableBody = (props: ComponentProps<'tbody'>) => <tbody {...props} />;

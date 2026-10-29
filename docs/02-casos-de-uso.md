@@ -35,6 +35,15 @@ Cada CU indica qué piezas del código lo implementan y qué tests lo cubren.
 
 ---
 
+## CU-09 · Consultar el historial de ventas  *(petición del autor tras la entrega)*
+
+**Disparador:** pestaña **Ventas** de la cabecera (`/ventas`).
+**Flujo:** `GET /sales?page&size=20` → tabla de las ventas del cajero, de la más reciente a la más antigua: fecha, estado (Abierta · Finalizada · Cancelada, con color y texto), artículos, productos y total. **Ver** abre un modal con el detalle (`GET /sales/{id}`): líneas con precio, cantidad e importe, y el total.
+**Alternativos:** sin ventas → estado vacío · error de carga → aviso + **Reintentar** · más de 20 → paginación Anterior / Siguiente.
+**Implementación:** `features/sales-history` (services, hooks `use-sales-page` y `use-sale-detail`, `screen` con `sales-table` y `sale-detail-modal`) · cabecera común `auth/components/session-header` con las pestañas Caja · Ventas.
+
+---
+
 ## CU-07 · Cerrar sesión  *(RF-16)*
 
 **Disparador:** botón **Cerrar sesión** en la cabecera (junto al nombre del cajero).
@@ -123,7 +132,7 @@ Cada CU indica qué piezas del código lo implementan y qué tests lo cubren.
 1. Se abre un modal con el resumen: nº de artículos, nº de líneas y **total**.
 2. Foco en **Confirmar**. `Enter` confirma, `Esc` cancela.
 3. Al confirmar: `PATCH /sales/{id}/complete` (no optimista; botón con estado de carga).
-4. Pantalla de éxito "Venta finalizada · 47,85 €" con **Nueva venta** enfocado (`Enter`): espera al cajero, que quizá aún está cobrando → `POST /sales` → venta nueva vacía con foco en el input.
+4. Se abre **automáticamente una venta nueva** (`POST /sales`): tabla vacía, panel a 0 y foco en el input. Un aviso "Venta finalizada · 47,85 €. Ya puedes escanear la siguiente." mantiene a la vista el importe cobrado hasta el primer escaneo. Si la venta nueva no se puede abrir (sin conexión), queda la venta finalizada con el botón **Nueva venta** para reintentar.
 
 **Alternativos:** D1 · Cancelar → vuelve a la venta sin cambios. D2 · Error del backend → se mantiene la venta y se muestra el error con reintento; **nunca** se pierde la venta.
 
@@ -168,3 +177,4 @@ Cada CU indica qué piezas del código lo implementan y qué tests lo cubren.
 | CU-00 | 15, 17 | ✅ | ✅ 200/401 | ✅ |
 | CU-07 | 16 | ✅ | ➖ | ✅ (full-stack) |
 | CU-08 | 18, 19 | ✅ | ✅ current 200/404 | ✅ (full-stack: recargar recupera la venta) |
+| CU-09 | — | ✅ | ✅ lista, detalle, paginación, error | ✅ (mocked + full-stack: la venta finalizada aparece en Ventas) |

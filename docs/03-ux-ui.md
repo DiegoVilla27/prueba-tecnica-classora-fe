@@ -33,10 +33,20 @@
           zona de trabajo (≈ 70 %)                                  panel de cobro (≈ 30 %)
 ```
 
-- Panel derecho **fijo**: el total nunca se desplaza con el scroll de la lista.
+- **Altura completa** (desde `lg`): la página ocupa exactamente el alto de la ventana; la tabla y el panel derecho llegan hasta abajo.
+- Panel derecho **fijo** con los botones al fondo (como en los frames): el total nunca se desplaza con el scroll de la lista.
 - La lista hace scroll interno; cabecera de tabla *sticky*.
+- Por debajo de `lg` (tablet, zoom 200 %) la página hace scroll normal.
 - Barra inferior con chuleta de atajos (enseña sin documentación).
 - Tablet (≤ 1024): el panel de total pasa a barra inferior fija.
+
+### 2.1 Móvil y tablet (320 px en adelante)
+Sin scroll horizontal en ningún ancho (comprobado a 320, 390, 768 y 1366 px):
+- **Cabecera:** marca, avatar y "Salir" en una fila; las pestañas Caja · Ventas bajan a una segunda fila a lo ancho (objetivo táctil de 44 px). El nombre del cajero se oculta visualmente por debajo de `md` (sigue para lectores de pantalla) y el avatar, por debajo de `sm`.
+- **Tablas (líneas e historial):** por debajo de `md` cada fila es una tarjeta apilada. En la caja, el nombre ocupa la primera línea (con el precio unitario debajo) y el stepper, el importe y la papelera, la segunda; caben incluso con 999 unidades.
+- **Formulario de escaneo:** el botón "Añadir" baja debajo del campo, a todo el ancho.
+- **Barra de atajos:** se oculta por debajo de `md` (en el móvil no hay teclado físico).
+- **Tipografía:** el título y el total grande bajan un paso por debajo de `sm`, para que totales de cuatro cifras no se salgan de la tarjeta.
 
 ## 3. Frames de Figma
 
@@ -184,7 +194,7 @@ Inventario sacado de los frames. Lo **genérico y sin negocio** va a `shared/com
 | atom | `IconButton` | `neutral` · `danger` · `outline`; `aria-label` obligatorio; 44 × 44 | Papelera, − / + del stepper |
 | atom | `Input` | `default` · `error` · `disabled`; `size` `md` · `lg` (código) | Código de producto, email, contraseña |
 | atom | `Label` | `required` opcional | "Código de producto", "Email" |
-| atom | `Badge` | `neutral` | "Abierta" |
+| atom | `Badge` | `neutral` · `success` · `danger` (siempre con texto) | "Abierta", "Finalizada", "Cancelada" |
 | atom | `Avatar` | iniciales | "AL" |
 | atom | `Kbd` | `default` (con borde) · `plain` (texto, barra de atajos) · `onPrimary` (dentro del botón Finalizar) | F12, ⏎, Ctrl Z, Esc |
 | atom | `Spinner` | `sm` · `md` | Botón cargando, conectando con el servidor |
@@ -198,14 +208,15 @@ Inventario sacado de los frames. Lo **genérico y sin negocio** va a `shared/com
 | molecule | `Alert` | `error` · `info` (inline) | Errores de red y del login |
 | molecule | `KeyValue` | — | "Estado · En curso" |
 | molecule | `ShortcutHint` | `Kbd` + etiqueta | "F12 Finalizar" |
+| molecule | `Pagination` | Anterior / Siguiente con estado visible ("Página 1 de 3 · 42 ventas"), bordes deshabilitados | Historial de ventas |
 | molecule | `UserBadge` | `Avatar` + nombre + subtítulo | "Ana López · Sesión de cajero" |
 | molecule | `EmptyState` | icono, título, descripción | Venta vacía |
-| organism | `Modal` | `<dialog>` nativo con `showModal()` (fondo inerte, foco dentro, capa superior); `default` · `destructive` (`alertdialog`); `overline`, `title`, `description`, `children`, acciones; `Esc` cierra salvo con `isBusy` | Finalizar, vaciar, cerrar sesión |
-| organism | `AppHeader` | slots: marca, contexto ("Puesto de caja"), usuario, acciones | Cabecera de la caja |
+| organism | `Modal` | `<dialog>` nativo con `showModal()` (fondo inerte, foco dentro, capa superior); `default` · `destructive` (`alertdialog`); `overline`, `title`, `description`, `children`, acciones; `Esc` cierra salvo con `isBusy`; `size` `md` · `lg` (tablas) | Finalizar, vaciar, cerrar sesión, detalle de venta |
+| organism | `AppHeader` | slots: marca, contexto ("Puesto de caja"), navegación, usuario, acciones | Cabecera de la caja y del historial (pestañas Caja · Ventas) |
 | organism | `ShortcutsBar` | lista de `ShortcutHint` + texto final | Pie de la caja |
 | organism | `DataTable` | piezas semánticas (`DataTable` con `caption`, `DataTableHead`, `DataTableBody`, `DataTableRow` `isHighlighted`/`isSelected`, `DataTableHeaderCell` `scope="col"`, `DataTableCell`, `align`) | Tabla de la venta |
 | template | `AuthLayout` | `aside` (panel de marca) + `children` (formulario) | Login |
-| template | `AppLayout` | `header`, `main` (≈ 70 %), `aside` (≈ 30 %, fijo), `footer` | Caja |
+| template | `AppLayout` | `header`, `main` (≈ 70 %), `aside` opcional (≈ 30 %), `footer`; altura de ventana desde `lg` | Caja, historial |
 | — | Toast | `sonner` (`<Toaster />` en `core/providers`, `unstyled` con nuestras clases): barra `inverse` abajo a la izquierda, acción en negrita | "Huevos camperos eliminados · Deshacer" |
 
 ### 5.2 `features/*/screen/components` (negocio)

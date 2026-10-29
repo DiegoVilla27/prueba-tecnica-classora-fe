@@ -26,4 +26,16 @@ describe('UI: AppLayout', () => {
     expect(screen.getByRole('contentinfo')).toHaveTextContent('Atajos');
     await expectNoA11yViolations(container);
   });
+
+  it('should render without a side panel', () => {
+    // Arrange
+    const header = <header>cabecera</header>;
+
+    // Act
+    render(<AppLayout header={header}>contenido</AppLayout>);
+
+    // Assert
+    expect(screen.getByRole('main')).toHaveTextContent('contenido');
+    expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
+  });
 });

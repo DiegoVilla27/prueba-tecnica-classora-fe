@@ -59,7 +59,7 @@ src/
 ├── shared/                    # Reutilizable entre features, sin negocio
 │   ├── components/ui/         # Design system con Atomic Design + index.ts barrel (ver §2.4)
 │   │   ├── atoms/             #   button, icon-button, input, label, badge, avatar, kbd, spinner, money, overline, card, logo
-│   │   ├── molecules/         #   form-field, password-field, quantity-stepper, alert, key-value, shortcut-hint, user-badge, empty-state
+│   │   ├── molecules/         #   form-field, password-field, quantity-stepper, alert, key-value, shortcut-hint, user-badge, empty-state, pagination
 │   │   ├── organisms/         #   modal, app-header, shortcuts-bar, data-table
 │   │   └── templates/         #   auth-layout, app-layout
 │   ├── hooks/                 # use-hotkeys, use-announcer…
