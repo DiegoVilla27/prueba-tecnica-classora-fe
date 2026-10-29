@@ -16,3 +16,27 @@ describe('Utils: cn', () => {
     expect(result).toBe('text-ink px-4');
   });
 });
+
+describe('Utils: cn with the design tokens', () => {
+  it('should keep a token text color next to a token font size', () => {
+    // Arrange
+    const classes = ['text-on-primary', 'text-body'];
+
+    // Act
+    const result = cn(...classes);
+
+    // Assert
+    expect(result).toBe('text-on-primary text-body');
+  });
+
+  it('should still resolve conflicts between token font sizes', () => {
+    // Arrange
+    const classes = ['text-sm', 'text-title'];
+
+    // Act
+    const result = cn(...classes);
+
+    // Assert
+    expect(result).toBe('text-title');
+  });
+});

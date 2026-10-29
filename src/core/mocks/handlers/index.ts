@@ -1,3 +1,4 @@
+import handlersAuth from '@features/auth/mocks/handlers';
 import type { RequestHandler } from 'msw';
 
 /**
@@ -5,8 +6,8 @@ import type { RequestHandler } from 'msw';
  *
  * @remarks
  * Used by the browser worker (`pnpm local:mock`, e2e `mocked`) and by the Node server of the
- * tests. Features add theirs here as they are built (auth, catalog, checkout).
+ * tests. Features add theirs here as they are built (catalog and checkout next).
  */
-const handlers: RequestHandler[] = [];
+const handlers: RequestHandler[] = [...handlersAuth];
 
 export default handlers;

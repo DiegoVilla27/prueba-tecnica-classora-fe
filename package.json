@@ -25,7 +25,7 @@
     "test:integration": "vitest run --project integration",
     "test:coverage": "vitest run --coverage",
     "e2e": "playwright test --project=mocked",
-    "e2e:full-stack": "playwright test --project=full-stack",
+    "e2e:full-stack": "E2E_FULL_STACK=1 playwright test --project=full-stack",
     "e2e:ui": "playwright test --ui",
     "prepare": "husky"
   },

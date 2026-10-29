@@ -22,7 +22,7 @@ Cada CU indica qué piezas del código lo implementan y qué tests lo cubren.
 | A4 · Red / arranque en frío | "Conectando con el servidor…" y reintento |
 | A5 · Llega con `?expired=1` | Aviso "Tu sesión ha caducado. Vuelve a entrar." |
 
-**Implementación:** `auth/screen` (+ `hooks/` useLoginScreen, `schema/`) · `auth/services` · `core/router` (guards) · `shared/utils/storage`.
+**Implementación:** `auth/screen` (`components/login-form` con `hooks/` useLoginForm y `schema/`) · `auth/services` · `auth/hooks/use-me` · `core/router` (guards) · `shared/utils/storage`.
 **Tests:** unit (schema, hook), integración MSW (200, 401), E2E (login en ambos proyectos).
 
 ---

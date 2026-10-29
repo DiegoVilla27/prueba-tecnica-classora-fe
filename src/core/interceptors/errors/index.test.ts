@@ -10,8 +10,11 @@ import { http, HttpResponse } from 'msw';
 import interceptorErrors from '.';
 
 describe('Core: interceptorErrors', () => {
-  beforeAll(() => interceptorErrors());
-  afterAll(() => axiosInstance.interceptors.response.clear());
+  let eject: () => void;
+  beforeAll(() => {
+    eject = interceptorErrors();
+  });
+  afterAll(() => eject());
 
   it('should reject with an ApiError carrying the API status and message', async () => {
     // Arrange

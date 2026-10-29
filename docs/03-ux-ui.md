@@ -97,7 +97,7 @@ En código se usan **solo** vía clases (`bg-primary`, `text-ink-muted`, `text-t
 | Token | Tamaño / interlineado | Peso | Uso (frame) |
 |---|---|---|---|
 | `text-total` | 56 px / 1 | 700 | Total de la venta y del modal finalizar |
-| `text-display` | 48 px / 1,2 | 600 | Titular del panel de marca del login |
+| `text-display` | 48 px / 1,5 | 600 | Titular del panel de marca del login |
 | `text-title` | 28 px / 1,25 | 700 | "Venta en curso", "Entra en tu caja", título de modal |
 | `text-scan` | 18 px / 1,5 | 400 | Input de código y campos del login |
 | `text-body` | 18 px / 1,5 | 600 / 400 | Nombre del producto, importes de la tabla |
@@ -150,7 +150,7 @@ Importes y cantidades: siempre `tabular-nums` y alineados a la derecha.
   --text-total: 3.5rem;
   --text-total--line-height: 1;
   --text-display: 3rem;
-  --text-display--line-height: 1.2;
+  --text-display--line-height: 1.5;
   --text-title: 1.75rem;
   --text-title--line-height: 1.25;
   --text-scan: 1.125rem;

@@ -17,7 +17,7 @@
      │                            └─ models/ (sale, money…)                        │
      └──────────────────────────────────┬─────────────────────────────────────────┘
                                         │
-     shared (components/ui · hooks: use-me, use-hotkeys, use-announcer · utils: cn, format-money, storage)
+     shared (components/ui · hooks: use-hotkeys, use-announcer · utils: cn, format-money, storage)
                                         │
      core (axios · http · interceptors errors/jwt · router · environments · providers · mocks)
 ```
@@ -43,7 +43,8 @@ Imports cortos, co-localización (componente + test + hook + schema) y la misma 
 - Screens cargadas con `React.lazy` (por eso exportan **default**) dentro de `<Suspense>`.
 - Tokens en `shared/utils/storage` (`TOKEN`, `REFRESH`), igual que task-manager.
 - `core/interceptors/jwt`: añade `Bearer`; ante 401 hace **un** `POST /auth/refresh` (las peticiones concurrentes esperan esa misma promesa) y reintenta una vez; si el refresh falla → limpia sesión y navega a `/login?expired=1`. El refresh se pide con una llamada Axios **directa** (no con `axiosInstance` ni con un service de `auth`): así no vuelve a pasar por los interceptores y `core` no depende de `features`. Un reintento que falla por otro motivo (500…) es un error normal y no cierra la sesión.
-- `shared/hooks/use-me`: `GET /users/me` (TanStack Query) para la cabecera ("Cajero: Ana López").
+- `auth/hooks/use-me`: `GET /users/me` (TanStack Query, `staleTime: Infinity`) para la cabecera ("Ana López"). Vive en `auth` y no en `shared` porque necesita su service, DTO y mapper, y `shared` no puede importar de `features`; la caja lo usa por la API pública `@features/auth`.
+- `auth/hooks/use-logout`: borra los tokens y **toda** la caché de TanStack Query y navega a `/login`. La venta abierta queda en el servidor.
 
 > ⚠️ Tokens en `localStorage`, como en task-manager: es lo pragmático para una SPA en otro dominio que la API. El riesgo de XSS se mitiga con React (sin `dangerouslySetInnerHTML`) y CSP en Vercel. Alternativa más segura, para la entrevista: refresh token en cookie `HttpOnly` + `SameSite`.
 
@@ -80,7 +81,7 @@ src/
 │   │   ├── templates/                          # auth-layout, app-layout
 │   │   │   └── index.ts
 │   │   └── index.ts                            # barrel raíz: export * from './atoms' …
-│   ├── hooks/{use-me, use-hotkeys, use-announcer}/index.ts(x)
+│   ├── hooks/{use-hotkeys, use-announcer}/index.ts(x)
 │   ├── utils/{cn, format-money, storage}/index.ts
 │   ├── mocks/
 │   │   ├── server/index.ts                     # setupServer para tests
@@ -88,17 +89,21 @@ src/
 │   └── test-utils/{render,axe}/index.ts(x)     # renderRoute (rutas reales + providers) · expectNoA11yViolations
 ├── features/
 │   ├── auth/
-│   │   ├── index.ts                            # export { LoginScreen, useLogout }
+│   │   ├── index.ts                            # export { LoginScreen, useMe, useLogout, cashierFullName, … }
+│   │   ├── constants/messages/index.ts         # LOGIN_COPY (textos de Figma) · AUTH_MESSAGES (errores)
+│   │   ├── models/cashier/index.ts             # Cashier · cashierFullName · cashierInitials
 │   │   ├── services/
-│   │   │   ├── index.ts                        # loginSvc, refreshSvc, logoutSvc
-│   │   │   └── dtos/{request,response}/index.ts
-│   │   ├── hooks/use-logout/index.ts
-│   │   ├── mocks/handlers/index.ts
+│   │   │   ├── index.ts                        # loginSvc (timeout 60 s por el arranque en frío), getMeSvc, logoutSvc
+│   │   │   ├── dtos/{request,response}/index.ts
+│   │   │   └── mappers/index.ts                # toCashier
+│   │   ├── hooks/{use-me, use-logout}/index.ts
+│   │   ├── mocks/{data,handlers}/index.ts      # cajero demo, tokens falsos, mismas respuestas que la API
 │   │   └── screen/
-│   │       ├── index.tsx                       # LoginScreen
-│   │       ├── index.integration.test.tsx
-│   │       ├── hooks/index.ts                  # useLoginScreen (RHF + Zod, como useLoginPage)
-│   │       └── schema/index.ts                 # LoginSchema
+│   │       ├── index.tsx                       # LoginScreen = AuthLayout(BrandPanel, LoginForm)
+│   │       ├── index.integration.test.tsx      # L-01…L-03, red, 429, ?expired=1, logout
+│   │       └── components/
+│   │           ├── brand-panel/                # panel verde
+│   │           └── login-form/                 # index.tsx · hooks/ (useLoginForm: RHF + Zod + mutation) · schema/ (LoginSchema)
 │   ├── catalog/
 │   │   ├── index.ts                            # export { useProductLookup, type Product, ProductNotFoundError }
 │   │   ├── models/product/index.ts
@@ -194,7 +199,7 @@ const addLine = useMutation({
 4. `reset()` + `setFocus('code')` + anuncio `aria-live`.
 
 ## 7. Formularios (RHF + Zod)
-- `auth/screen`: `LoginSchema` (email válido, contraseña requerida) en `useLoginScreen`, igual que `useLoginPage` de task-manager. Si llega `?expired=1`, aviso "Tu sesión ha caducado".
+- `auth/screen/components/login-form`: `LoginSchema` (email válido, contraseña requerida) en `useLoginForm`, igual que `useLoginPage` de task-manager. Si llega `?expired=1`, aviso "Tu sesión ha caducado". Ante un 401 se vacía la contraseña y recibe el foco.
 - `scan-form`: `ScanSchema` (ver §6).
 - Cantidad en línea: no es `<form>`; reutiliza `QuantitySchema` con `safeParse` (DRY).
 

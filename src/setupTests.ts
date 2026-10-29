@@ -2,6 +2,9 @@ import '@testing-library/jest-dom/vitest';
 import server from '@shared/mocks/server';
 import { cleanup } from '@testing-library/react';
 
+// axe-core probes <canvas>, which jsdom does not implement: answer "no context" quietly.
+HTMLCanvasElement.prototype.getContext = () => null;
+
 // Any request without a handler fails the test: no real network in tests.
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
 

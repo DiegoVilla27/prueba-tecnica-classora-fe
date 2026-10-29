@@ -24,7 +24,7 @@ Aplicación de **caja de supermercado** (React + TypeScript) usada de forma inte
 | Venta en curso (copia local de la venta del servidor + estado de UI) | **Zustand** |
 | Peticiones, caché y mutaciones | **TanStack Query** (mutaciones de la venta serializadas con `scope`) |
 | HTTP | **Axios**: `core/axios` (instancia) + `core/http` (`httpService`) + `core/interceptors` (`errors`, `jwt` con refresh silencioso) |
-| Sesión | Tokens en `shared/utils/storage` (como task-manager); usuario actual con `use-me` |
+| Sesión | Tokens en `shared/utils/storage` (como task-manager); usuario actual con `useMe` de la feature `auth` (API pública `@features/auth`) |
 | Formularios | **React Hook Form + Zod** (`@hookform/resolvers/zod`) |
 | Validación runtime de respuestas | Zod en `services/dtos` |
 | Estilos | **Tailwind CSS v4** (`@tailwindcss/vite`), tokens en `@theme` de `src/index.css`, `cn()` = `clsx` + `tailwind-merge` |
@@ -62,9 +62,10 @@ src/
 │   │   ├── molecules/         #   form-field, password-field, quantity-stepper, alert, key-value, shortcut-hint, user-badge, empty-state
 │   │   ├── organisms/         #   modal, app-header, shortcuts-bar, data-table
 │   │   └── templates/         #   auth-layout, app-layout
-│   ├── hooks/                 # use-hotkeys, use-announcer, use-me…
+│   ├── hooks/                 # use-hotkeys, use-announcer…
 │   ├── utils/                 # cn, format-money, storage…
-│   └── mocks/server/          # setupServer para tests
+│   ├── mocks/server/          # setupServer para tests
+│   └── test-utils/            # renderRoute, createTestWrapper, registerInterceptors, expectNoA11yViolations
 └── features/
     └── [feature]/
         ├── index.ts           # API pública de la feature (lo único importable desde fuera)

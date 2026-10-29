@@ -159,3 +159,32 @@ Registro del uso de inteligencia artificial en el frontend. Es el entregable de 
   - **Docs:** el `CLAUDE.md` decía `forwardRef` (React 19 usa `ref` como prop). `04`/`06` decían que el refresh usaba un service de `auth` (ahora es una llamada directa, para que `core` no dependa de `features`). Roadmap del hito 1 ✅.
 - **Decisiones / correcciones humanas:** React Compiler obligatorio.
 - **Resultado:** `typecheck`, `lint` (0 avisos), `format:check`, `test:unit`, `test:integration`, `build:prod`, `e2e` y Docker en verde. Commit `build: set up vite, react 19 with react compiler and core infrastructure` en `feature/hito-1-setup`, merge fast-forward a `main` y push.
+
+### #10 · 2026-10-29 01:20 · Hito 2: login, sesión y primeras piezas del design system
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt (resumen):** Empezar el hito 2.
+- **Qué hizo la IA:**
+  - **Contrato:** comprobó contra el back local las respuestas reales (401 `Invalid credentials.`, 400 con `errors[]`, tokens, `/users/me` y CORS para `localhost:3000`).
+  - **Feature `auth`:**
+    - modelo `Cashier` (nombre completo, iniciales), DTOs con Zod y mapper;
+    - `loginSvc`, con un timeout de 60 s para que el primer login del día aguante el arranque en frío de Render, `getMeSvc` y `logoutSvc`;
+    - handlers MSW con las mismas respuestas que la API;
+    - `useMe` y `useLogout`, este último limpiando tokens y toda la caché de Query.
+  - **Decisión:** `use-me` vive en `auth` y no en `shared/hooks`, como decían los docs, porque necesita service, DTO y mapper y `shared` no puede importar de `features`. Docs actualizados.
+  - **Pantalla:** `LoginScreen` = `AuthLayout` + `BrandPanel` + `LoginForm` (RHF + Zod en `useLoginForm`), con los textos literales de Figma.
+    - Errores: 401 vacía la contraseña y le da el foco; 429; red y 5xx con "No se pudo conectar con el servidor…"; aviso de `?expired=1`.
+    - La caja provisional ya muestra el cajero y "Salir".
+  - **Design system adelantado del hito 4** para que el login sea fiel: `Button`, `Input`, `Label`, `Logo`, `Overline`, `Spinner`, `FormField`, `PasswordField`, `Alert` y `AuthLayout`. Sin `forwardRef` (React 19) y cada uno con test y `axe`. El `Spinner` usa `<output>`, como sugirió `jsx-a11y`.
+  - **Tests:**
+    - 53 unitarios con un 94 % de cobertura en líneas y un 91 % en ramas.
+    - 8 de integración: L-01…L-03, email mal formado, red caída, 429, sesión caducada y logout.
+    - E2E `login` en `mocked` y en `full-stack` contra la API real (en verde).
+  - **Fidelidad:** capturas en Chromium comparadas con el frame. Se ajustaron el interlineado del titular (1,2 → 1,5, medido en Figma) y el ancho del panel (5/12 → 7/16, 600 de 1366 px).
+- **Fallos encontrados y corregidos:**
+  - **Contraste del botón principal (2,08:1), detectado por `axe` en el e2e.** `tailwind-merge` no conocía la escala tipográfica propia: tomaba `text-body` por un color y eliminaba `text-on-primary`. Se registró la escala con `extendTailwindMerge`; hay test en `cn` y en `Button`.
+  - El test de `getMeSvc` no registraba el interceptor JWT.
+  - El selector `getByLabel('Contraseña')` de Playwright también encontraba el botón "Mostrar contraseña"; ahora es exacto.
+  - Los imports de los e2e necesitaban la extensión `.ts` por `nodenext`.
+- **Docs:** `CLAUDE.md`, `02`, `03` (token `display`), `04`, `06`, skill `new-component` (sin `forwardRef`) y roadmap (hito 2 ✅; hito 4 con lo que queda).
+- **Decisiones / correcciones humanas:** Ninguna.
+- **Resultado:** `typecheck`, `lint` (0 avisos), `format:check`, unit, integración, `build:prod`, e2e `mocked` y `full-stack` en verde. Commit `feat(auth): add login screen, session hooks and first design system pieces` en `feature/hito-2-auth`, merge fast-forward a `main` y push.

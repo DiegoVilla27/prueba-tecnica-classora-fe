@@ -1,14 +1,13 @@
-/**
- * Login screen.
- *
- * @remarks
- * Placeholder of hito 1 so the router and guards work end to end; the real form
- * (React Hook Form + Zod, AuthLayout) is built in hito 2.
- */
+import { AuthLayout, Logo } from '@shared/components/ui';
+import BrandPanel from './components/brand-panel';
+import LoginForm from './components/login-form';
+
+/** Login screen (CU-00): AuthLayout with the brand panel and the login form. */
 export const LoginScreen = () => (
-  <main className="grid min-h-dvh place-items-center bg-surface p-6">
-    <h1 className="text-title font-bold text-ink">Entra en tu caja</h1>
-  </main>
+  <AuthLayout aside={<BrandPanel />}>
+    <Logo className="mb-10 lg:hidden" />
+    <LoginForm />
+  </AuthLayout>
 );
 
 export default LoginScreen;

@@ -18,10 +18,12 @@
 - [x] `core/` (axios, http, interceptors errors/jwt con refresh único, `ApiError`, router + guards, environments, providers, mocks) y `shared/utils/{cn,storage}`. Pantallas de login y caja como marcadores (se construyen en los hitos 2 y 5).
 - [x] Dockerfile (build + nginx), `docker-compose.yml`, `vercel.json` (SPA + CSP), `.vscode/`.
 
-## Hito 2 · Auth — ~2 h
-- [ ] `auth/services` + DTOs + handlers MSW.
-- [ ] `auth/screen` (login con RHF + Zod) + integración L-01…L-03.
-- [ ] `use-me`, `use-logout`, guards.
+## Hito 2 · Auth ✅
+- [x] `auth/services` (`loginSvc` con timeout de 60 s para el arranque en frío, `getMeSvc`, `logoutSvc`) + DTOs Zod + mapper + handlers MSW con las mismas respuestas que la API.
+- [x] `auth/screen` (`AuthLayout` + `BrandPanel` + `LoginForm` con RHF + Zod), fiel al frame de Figma + integración L-01…L-03, red caída, 429, `?expired=1` y logout.
+- [x] `use-me`, `use-logout` (en `auth`, públicos por `@features/auth`); guards del hito 1. La caja provisional ya muestra el cajero y "Salir".
+- [x] Adelantado del hito 4 lo que necesita el login: átomos `Button`, `Input`, `Label`, `Logo`, `Overline`, `Spinner`; moléculas `FormField`, `PasswordField`, `Alert`; plantilla `AuthLayout` (con tests y `axe`).
+- [x] E2E `login` en `mocked` y `full-stack` (contra la API real).
 
 ## Hito 3 · Dominio, store y servicios de venta — ~3 h (TDD)
 - [ ] `checkout/models` + unit.
@@ -32,7 +34,7 @@
 
 ## Hito 4 · Design system (Atomic Design) — ~3 h
 - [ ] Tokens y tipografía de `docs/03-ux-ui.md` §4 en el `@theme` (Inter Variable autoalojada).
-- [ ] `shared/components/ui`: `atoms` → `molecules` → `organisms` → `templates`, cada nivel con su barrel + barrel raíz; tests de variantes, teclado y `axe`.
+- [ ] `shared/components/ui` restante (lo del login ya está): átomos `IconButton`, `Badge`, `Avatar`, `Kbd`, `Money`, `Card`; moléculas `QuantityStepper`, `KeyValue`, `ShortcutHint`, `UserBadge`, `EmptyState`; organismos `Modal`, `AppHeader`, `ShortcutsBar`, `DataTable`; plantilla `AppLayout`. Tests de variantes, teclado y `axe`.
 - [ ] Regla `no-restricted-imports` que impide importar de un nivel superior.
 - [ ] `use-hotkeys`, `use-announcer`, `cn`, `format-money`.
 

@@ -8,7 +8,7 @@
 |---|---|---|
 | Iniciar sesión | `POST /auth/login` | `auth/services` → `loginSvc` |
 | Renovar token | `POST /auth/refresh` | `core/interceptors/jwt` (llamada directa, fuera de los interceptores) |
-| Cajero en cabecera | `GET /users/me` | `shared/hooks/use-me` |
+| Cajero en cabecera | `GET /users/me` | `auth/hooks/use-me` (por `@features/auth`) |
 | Buscar producto | `GET /products/{code}` | `catalog/services` → `getProductByCodeSvc` |
 | Recuperar venta abierta | `GET /sales/current` | `checkout/hooks/use-current-sale` |
 | Abrir venta | `POST /sales` | ídem |

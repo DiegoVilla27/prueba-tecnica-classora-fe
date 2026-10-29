@@ -23,7 +23,7 @@ Empieza en el nivel más bajo; subir es fácil.
 
 ## 3. Exports (CLAUDE.md §2.2)
 - Componente de feature/screen: `export const SaleTable: React.FC<Props> = …;` **y** `export default SaleTable;`
-- Componente `ui`: **solo named** (`export const Button = React.forwardRef…`; `Button.displayName = 'Button'`).
+- Componente `ui`: **solo named** (`export const Button = ({ ref, …props }: ButtonProps) => …`). En React 19 `ref` es una prop: **sin** `forwardRef` ni `displayName`.
 - Hook: `const useSaleTable = () => {…}; export default useSaleTable;`
 - Schema: `const ScanSchema = z.object({…}); export default ScanSchema;`
 
