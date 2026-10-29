@@ -60,7 +60,7 @@ El back envía decimales (`0.95`); los mappers los pasan a céntimos con `fromEu
 | `pnpm local` (`.env.localhost`) | `http://localhost:8080/api/v1` | `false` |
 | `pnpm local:mock` (`.env.mock`) | — | `true` (MSW: desarrollo sin backend; el worker solo existe en este build) |
 | Docker (`docker-compose.yml`) | `http://localhost:8080/api/v1` | `false` |
-| Vercel **dev** (rama `dev`) | API Render dev | `false` |
-| Vercel **prod** (rama `main`) | API Render prod | `false` |
+| Vercel **dev** (rama `dev`, https://classora-tpv-dev.vercel.app) | `https://pos-api-dev-k0y9.onrender.com/api/v1` | `false` |
+| Vercel **prod** (rama `main`, https://classora-tpv-prod.vercel.app) | `https://pos-api-prod.onrender.com/api/v1` | `false` |
 
 CORS: el back permite `http://localhost:[*]` y los dominios de Vercel de cada entorno (`CORS_ALLOWED_ORIGINS`).

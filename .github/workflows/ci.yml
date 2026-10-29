@@ -1,0 +1,311 @@
+name: CI Frontend (React)
+
+on:
+  push:
+    branches:
+      - dev
+      - main
+
+  pull_request:
+    branches:
+      - dev
+      - main
+
+  workflow_dispatch:
+
+concurrency:
+  group: ci-frontend-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ============================================================
+  # 1. FAST-FAIL STATIC QUALITY GATE
+  # ============================================================
+  static-checks:
+    name: ⚡ Fast-Fail Quality Gate (Format, Lint & Types)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🛡️ Verify PR source branch
+        if: github.base_ref == 'main' && github.head_ref != 'dev'
+        env:
+          SOURCE_BRANCH: ${{ github.head_ref }}
+        run: |
+          echo "❌ ERROR: No está permitido hacer Pull Request a 'main' desde '$SOURCE_BRANCH'."
+          echo "👉 Todo cambio hacia 'main' debe provenir obligatoriamente de 'dev'."
+          exit 1
+
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 📦 Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: 🟢 Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: 📥 Install Dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: 🎨 Prettier Format Check
+        run: pnpm run format:check
+
+      - name: ⚡ Run Oxlint (incl. React Compiler and dependency rules)
+        run: pnpm run lint
+
+      - name: 🛡️ Strict TypeScript Typecheck
+        run: pnpm run typecheck
+
+  # ============================================================
+  # 2. UNIT TESTS
+  # ============================================================
+  unit-tests:
+    name: 🧪 Unit Tests & Vitest Coverage (≥ 80 %)
+    needs: static-checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 📦 Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: 🟢 Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: 📥 Install Dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: 🧪 Run Tests & Check Coverage
+        run: pnpm run test:unit
+
+      - name: 📤 Upload Coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: coverage/
+          retention-days: 7
+
+  # ============================================================
+  # 3. INTEGRATION TESTS
+  # ============================================================
+  integration-tests:
+    name: 🔗 Integration Tests (screens + MSW)
+    needs: static-checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 📦 Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: 🟢 Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: 📥 Install Dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: 🔗 Run Integration Tests
+        run: pnpm run test:integration
+
+  # ============================================================
+  # 4. E2E MOCKED (Playwright + MSW worker + axe)
+  # ============================================================
+  e2e-mocked:
+    name: 🎭 E2E Mocked (Playwright + axe)
+    needs: static-checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 📦 Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: 🟢 Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: 📥 Install Dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: 🌐 Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: 🎭 Run E2E (mocked)
+        run: pnpm run e2e
+
+      - name: 📤 Upload Playwright Report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-mocked
+          path: playwright-report/
+          retention-days: 7
+
+  # ============================================================
+  # 5. E2E FULL-STACK (real Java API + PostgreSQL in Docker)
+  # ============================================================
+  e2e-full-stack:
+    name: 🧩 E2E Full-Stack (real API)
+    needs: static-checks
+    runs-on: ubuntu-latest
+
+    services:
+      # Same credentials as the backend `local` profile (application-local.properties)
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: pos_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U user -d pos_db"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 📥 Checkout Backend (main)
+        uses: actions/checkout@v4
+        with:
+          repository: DiegoVilla27/prueba-tecnica-classora-be
+          ref: main
+          path: backend
+
+      - name: 🐳 Build Backend Image
+        run: docker build -t pos-api ./backend
+
+      - name: ▶️ Start Backend (profile local, Flyway seeds the catalog and the cashier)
+        run: |
+          docker run -d --name pos-api --network host -e SPRING_PROFILES_ACTIVE=local pos-api
+          for i in $(seq 1 60); do
+            if curl -fs http://localhost:8080/api/v1/actuator/health > /dev/null; then
+              echo "✅ Backend is up"; exit 0
+            fi
+            sleep 2
+          done
+          echo "❌ Backend did not start"; docker logs pos-api; exit 1
+
+      - name: 📦 Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: 🟢 Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: 📥 Install Dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: 🌐 Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: 🧩 Run E2E (full-stack)
+        run: pnpm run e2e:full-stack
+
+      - name: 🪵 Backend Logs
+        if: failure()
+        run: docker logs pos-api
+
+      - name: 📤 Upload Playwright Report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-full-stack
+          path: playwright-report/
+          retention-days: 7
+
+  # ============================================================
+  # 6. PRODUCTION BUILD
+  # ============================================================
+  build:
+    name: 📦 Production Build
+    needs: static-checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 📦 Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: 🟢 Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: 📥 Install Dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: 📦 Build (prod)
+        run: pnpm run build:prod
+
+  # ============================================================
+  # 7. FINAL CI QUALITY GATE (the required check of the protected branches)
+  # ============================================================
+  quality-gate:
+    name: 🛡️ Frontend CI Quality Gate
+    needs:
+      - static-checks
+      - unit-tests
+      - integration-tests
+      - e2e-mocked
+      - e2e-full-stack
+      - build
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🛡️ Evaluate CI Results
+        env:
+          STATIC_RESULT: ${{ needs.static-checks.result }}
+          UNIT_RESULT: ${{ needs.unit-tests.result }}
+          INTEGRATION_RESULT: ${{ needs.integration-tests.result }}
+          E2E_MOCKED_RESULT: ${{ needs.e2e-mocked.result }}
+          E2E_FULL_STACK_RESULT: ${{ needs.e2e-full-stack.result }}
+          BUILD_RESULT: ${{ needs.build.result }}
+        run: |
+          echo "=========================================="
+          echo "🛡️ Frontend CI Quality Gate"
+          echo "=========================================="
+          echo "Static:          $STATIC_RESULT"
+          echo "Unit:            $UNIT_RESULT"
+          echo "Integration:     $INTEGRATION_RESULT"
+          echo "E2E mocked:      $E2E_MOCKED_RESULT"
+          echo "E2E full-stack:  $E2E_FULL_STACK_RESULT"
+          echo "Build:           $BUILD_RESULT"
+          echo "=========================================="
+
+          for result in "$STATIC_RESULT" "$UNIT_RESULT" "$INTEGRATION_RESULT" "$E2E_MOCKED_RESULT" "$E2E_FULL_STACK_RESULT" "$BUILD_RESULT"; do
+            if [[ "$result" != "success" ]]; then
+              echo "❌ Frontend CI Quality Gate FAILED."
+              exit 1
+            fi
+          done
+
+          echo "✅ FRONTEND CI QUALITY GATE PASSED"
