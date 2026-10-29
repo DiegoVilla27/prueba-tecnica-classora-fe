@@ -32,11 +32,11 @@
 - [x] `use-current-sale` (reintentos de arranque en frío) y `use-sale-mutations` (optimistas, `scope`, líneas por producto, solo la última respuesta pinta).
 - [x] `catalog` completo (service con `ProductNotFoundError`, mapper, `use-product-lookup` con caché de 5 min, mocks con los 20 EAN-13 de la V3).
 
-## Hito 4 · Design system (Atomic Design) — ~3 h
-- [ ] Tokens y tipografía de `docs/03-ux-ui.md` §4 en el `@theme` (Inter Variable autoalojada).
-- [ ] `shared/components/ui` restante (lo del login ya está): átomos `IconButton`, `Badge`, `Avatar`, `Kbd`, `Money`, `Card`; moléculas `QuantityStepper`, `KeyValue`, `ShortcutHint`, `UserBadge`, `EmptyState`; organismos `Modal`, `AppHeader`, `ShortcutsBar`, `DataTable`; plantilla `AppLayout`. Tests de variantes, teclado y `axe`.
-- [ ] Regla `no-restricted-imports` que impide importar de un nivel superior.
-- [ ] `use-hotkeys`, `use-announcer`, `cn`, `format-money`.
+## Hito 4 · Design system (Atomic Design) ✅
+- [x] Tokens y tipografía de `docs/03-ux-ui.md` §4 en el `@theme` (Inter Variable autoalojada).
+- [x] `shared/components/ui` completo (26 piezas): átomos `IconButton`, `Badge`, `Avatar`, `Kbd`, `Money`, `Card`; moléculas `QuantityStepper`, `KeyValue`, `ShortcutHint`, `UserBadge`, `EmptyState`; organismos `Modal` (`<dialog>` nativo), `AppHeader`, `ShortcutsBar`, `DataTable`; plantilla `AppLayout`. Tests de variantes, teclado y `axe`. `Toaster` con el estilo del frame.
+- [x] Regla `no-restricted-imports` que impide importar de un nivel superior (hito 1).
+- [x] `use-hotkeys` (`useEffectEvent`, respeta los campos de texto), `use-announcer` (una región `aria-live` para toda la app), `cn`, `format-money`.
 
 ## Hito 5 · Screen de caja — ~5 h
 - [ ] checkout-header (cajero + cerrar sesión) · server-status.

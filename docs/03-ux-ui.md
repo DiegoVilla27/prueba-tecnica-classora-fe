@@ -179,32 +179,32 @@ Inventario sacado de los frames. Lo **genérico y sin negocio** va a `shared/com
 | Nivel | Componente | Variantes / props | Dónde aparece |
 |---|---|---|---|
 | atom | `Button` | `primary` · `secondary` · `danger` · `ghost`; `md` · `lg`; `isLoading` ("Finalizando…"); `shortcut` (pinta un `Kbd`) e icono final opcional | Entrar en la caja, Añadir ⏎, Finalizar venta F12, Vaciar venta, Salir, botones de modal |
-| atom | `IconButton` | `neutral` · `danger`; `aria-label` obligatorio | Papelera, − / + del stepper |
+| atom | `IconButton` | `neutral` · `danger` · `outline`; `aria-label` obligatorio; 44 × 44 | Papelera, − / + del stepper |
 | atom | `Input` | `default` · `error` · `disabled`; `size` `md` · `lg` (código) | Código de producto, email, contraseña |
 | atom | `Label` | `required` opcional | "Código de producto", "Email" |
 | atom | `Badge` | `neutral` | "Abierta" |
 | atom | `Avatar` | iniciales | "AL" |
-| atom | `Kbd` | — | F12, ⏎, Ctrl Z, Esc |
+| atom | `Kbd` | `default` (con borde) · `plain` (texto, barra de atajos) · `onPrimary` (dentro del botón Finalizar) | F12, ⏎, Ctrl Z, Esc |
 | atom | `Spinner` | `sm` · `md` | Botón cargando, conectando con el servidor |
 | atom | `Money` | `md` · `lg` · `total`; recibe **céntimos** | Precios, importes, total |
 | atom | `Overline` | — | "TOTAL DE LA VENTA", "REVISAR VENTA", "PUESTO DE CAJA" |
-| atom | `Card` | `padding` | Bloque del código, tabla, panel del total |
+| atom | `Card` | `padding` (`none` · `md` · `lg`); `as` (`div` · `section` · `aside`) para la etiqueta semántica | Bloque del código, tabla, panel del total |
 | atom | `Logo` | `onPrimary` (sobre verde) | Cabecera y panel de marca |
 | molecule | `FormField` | `label`, `helperText`, `error` (icono + texto, `role="alert"`, `aria-describedby`) | Código de producto, email |
 | molecule | `PasswordField` | `FormField` + botón Mostrar/Ocultar | Contraseña |
-| molecule | `QuantityStepper` | normal · en mínimo · en máximo (999 deshabilita +) | Columna Cantidad |
+| molecule | `QuantityStepper` | normal · en mínimo (− sigue activo: la pantalla decide si pregunta eliminar) · en máximo (999 deshabilita +); `<fieldset>` con `<legend>` oculta | Columna Cantidad |
 | molecule | `Alert` | `error` · `info` (inline) | Errores de red y del login |
 | molecule | `KeyValue` | — | "Estado · En curso" |
 | molecule | `ShortcutHint` | `Kbd` + etiqueta | "F12 Finalizar" |
 | molecule | `UserBadge` | `Avatar` + nombre + subtítulo | "Ana López · Sesión de cajero" |
 | molecule | `EmptyState` | icono, título, descripción | Venta vacía |
-| organism | `Modal` | `default` · `destructive`; `overline`, `title`, `description`, `children`, acciones; *focus trap*, `Esc`, devuelve el foco | Finalizar, vaciar, cerrar sesión |
+| organism | `Modal` | `<dialog>` nativo con `showModal()` (fondo inerte, foco dentro, capa superior); `default` · `destructive` (`alertdialog`); `overline`, `title`, `description`, `children`, acciones; `Esc` cierra salvo con `isBusy` | Finalizar, vaciar, cerrar sesión |
 | organism | `AppHeader` | slots: marca, contexto ("Puesto de caja"), usuario, acciones | Cabecera de la caja |
 | organism | `ShortcutsBar` | lista de `ShortcutHint` + texto final | Pie de la caja |
-| organism | `DataTable` | piezas semánticas (`Table`, `Th`, `Tr`, `Td`) con cabecera `surface-muted` y fila `highlighted` | Tabla de la venta |
+| organism | `DataTable` | piezas semánticas (`DataTable` con `caption`, `DataTableHead`, `DataTableBody`, `DataTableRow` `isHighlighted`/`isSelected`, `DataTableHeaderCell` `scope="col"`, `DataTableCell`, `align`) | Tabla de la venta |
 | template | `AuthLayout` | `aside` (panel de marca) + `children` (formulario) | Login |
 | template | `AppLayout` | `header`, `main` (≈ 70 %), `aside` (≈ 30 %, fijo), `footer` | Caja |
-| — | Toast | `sonner` (`<Toaster />` en `core/providers`) con estilo `inverse` y acción | "Huevos camperos eliminados · Deshacer" |
+| — | Toast | `sonner` (`<Toaster />` en `core/providers`, `unstyled` con nuestras clases): barra `inverse` abajo a la izquierda, acción en negrita | "Huevos camperos eliminados · Deshacer" |
 
 ### 5.2 `features/*/screen/components` (negocio)
 
@@ -253,7 +253,7 @@ Fuente de verdad: los frames de Figma (textos literales). Lo marcado 🧩 no tie
 - [ ] `aria-live="polite"` para "producto añadido"; `role="alert"` para errores.
 - [ ] Tabla semántica (`<table>`, `<th scope>`), cantidades con `aria-label="Cantidad de Leche entera"`.
 - [ ] Botones de icono con `aria-label`.
-- [ ] Modal con *focus trap*, `aria-modal`, cierre con `Esc`, devuelve el foco al input.
+- [ ] Modal sobre `<dialog>` nativo (`showModal()`: fondo inerte, foco dentro), cierre con `Esc`, y la pantalla devuelve el foco al input.
 - [ ] Toda acción posible solo con teclado; orden de tabulación = orden visual.
 - [ ] Errores con icono + texto (no solo color) y vinculados al input (`aria-invalid`, `aria-describedby`).
 - [ ] Objetivos táctiles ≥ 44×44 px (`min-h-target`).

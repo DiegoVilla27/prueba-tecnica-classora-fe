@@ -6,6 +6,15 @@ import { cleanup } from '@testing-library/react';
 // axe-core probes <canvas>, which jsdom does not implement: answer "no context" quietly.
 HTMLCanvasElement.prototype.getContext = () => null;
 
+// jsdom has no <dialog> modality: minimal showModal / close so the Modal can be tested.
+HTMLDialogElement.prototype.showModal = function showModal(this: HTMLDialogElement) {
+  this.open = true;
+};
+HTMLDialogElement.prototype.close = function close(this: HTMLDialogElement) {
+  this.open = false;
+  this.dispatchEvent(new Event('close'));
+};
+
 // Any request without a handler fails the test: no real network in tests.
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
 

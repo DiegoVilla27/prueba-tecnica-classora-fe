@@ -213,3 +213,28 @@ Registro del uso de inteligencia artificial en el frontend. Es el entregable de 
   - **Docs:** `CLAUDE.md` §3, `02`, `04` (store, extracto de mutación, árbol), `06`, skill `new-service` y roadmap (hito 3 ✅).
 - **Decisiones / correcciones humanas:** Ninguna.
 - **Resultado:** `typecheck`, `lint`, `format:check`, unit, integración, `build:prod` y e2e en verde. Commit `feat(checkout): add sale domain, store, services and optimistic mutations` en `feature/hito-3-sale-logic`, merge fast-forward a `main` y push.
+
+### #12 · 2026-10-29 16:45 · Hito 4: design system completo con Atomic Design
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt (resumen):** Empezar el hito 4.
+- **Qué hizo la IA:**
+  - **Comprobaciones previas:**
+    - jsdom no implementa `<dialog>.showModal()`, así que se añadió un *polyfill* mínimo en `setupTests`;
+    - `useEffectEvent` está disponible en React 19.3;
+    - `Intl` en `es-ES` da `14,94 €`, como en Figma.
+  - **Utilidades:**
+    - `formatMoney`, el único sitio donde el dinero se convierte en texto;
+    - `useHotkeys`, con un único listener vía `useEffectEvent`, que no roba `+`/`-`/`Supr` a los campos salvo que el atajo lo permita (`F12`, `Esc`, `Ctrl+Z`) y acepta ⌘ como Ctrl;
+    - `useAnnouncer`, con una sola región `aria-live` que repite el anuncio aunque el texto sea igual.
+  - **Design system (26 piezas en total):**
+    - átomos `IconButton`, `Badge`, `Avatar`, `Kbd`, `Money` (céntimos, `tabular-nums`) y `Card` (`as` semántico);
+    - moléculas `QuantityStepper` (`<fieldset>`, `+` deshabilitado en 999 y `−` activo en 1 para que la pantalla pregunte), `KeyValue` (`<dl>`), `ShortcutHint`, `UserBadge` y `EmptyState`;
+    - organismos `Modal` sobre `<dialog>` nativo (fondo inerte, `alertdialog` si es destructivo, `Esc` bloqueado con `isBusy`), `AppHeader`, `ShortcutsBar` y `DataTable` (tabla semántica con `caption`, `scope` y filas resaltada y seleccionada);
+    - plantilla `AppLayout` 70/30.
+    - Cada pieza con test, incluido `axe` donde tiene sentido.
+  - **`Toaster`** con el estilo del frame "Producto eliminado / Deshacer".
+  - **Caja provisional:** usa ya el design system (cabecera con `UserBadge` y "Salir", título con `Badge`, `EmptyState`, panel del total y barra de atajos). La captura en Chromium se comparó con el frame y se ajustaron las teclas: en Figma son texto plano, así que hay un nuevo tono `plain` del `Kbd`.
+  - **Lint:** `jsx-a11y` pidió `<section>` en lugar de `role="region"` (de ahí la prop `as` de `Card`) y `<fieldset>` en lugar de `role="group"`. Se quitó una clase `animate-in` que no existe en Tailwind v4.
+  - **Docs:** `03` §5 (variantes reales, `Modal` nativo, `Toast`) y §7, roadmap (hito 4 ✅).
+- **Decisiones / correcciones humanas:** Ninguna.
+- **Resultado:** 115 unitarios (95 % de cobertura en líneas y 90 % en ramas), integración, `build:prod`, e2e `mocked` y `full-stack` en verde. Commit `feat(ui): complete the design system with atomic design` en `feature/hito-4-design-system`, merge fast-forward a `main` y push.
