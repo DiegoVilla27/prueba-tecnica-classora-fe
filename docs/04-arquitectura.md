@@ -38,6 +38,7 @@ Imports cortos, co-localización (componente + test + hook + schema) y la misma 
 |---|---|---|
 | `/login` | `public` (si hay sesión → `/`) | `auth/screen` |
 | `/` | `private` (sin sesión → `/login`) | `checkout/screen` |
+| `/ventas` | `private` | `sales-history/screen` |
 | `*` | — | redirige a `/` |
 
 - Screens cargadas con `React.lazy` (por eso exportan **default**) dentro de `<Suspense>`.

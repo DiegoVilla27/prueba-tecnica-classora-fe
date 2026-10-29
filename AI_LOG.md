@@ -369,3 +369,60 @@ Registro del uso de inteligencia artificial en el frontend. Es el entregable de 
   - **Roadmap:** hito 8 ✅.
 - **Decisiones / correcciones humanas:** Ninguna.
 - **Resultado:** Commit y PR hasta `main` en los dos repos con el CI en verde; proyecto entregado.
+
+### #19 · 2026-10-29 22:00 · Mejoras tras la entrega: venta nueva automática, altura completa e historial
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt (resumen):** (1) Al finalizar, que todo vuelva a 0 con una venta nueva. (2) Una pantalla con todas las ventas y su detalle en un modal. (3) Que la tabla y el panel del total lleguen hasta el final de la pantalla.
+- **Qué hizo la IA:**
+  1. **Venta nueva automática:**
+     - Al confirmar, `startNewSale` abre la siguiente venta: panel a 0 y foco en el campo.
+     - El aviso `Alert` `success` ("Venta finalizada · X €. Ya puedes escanear la siguiente.") mantiene el importe hasta el primer escaneo.
+     - Mientras se abre la venta nueva se muestra "Abriendo la siguiente venta…", para no ver un instante la venta cerrada. Si falla, queda la pantalla con "Nueva venta" como respaldo, cubierta con un test.
+  2. **Altura completa:**
+     - `AppLayout` ocupa el alto de la ventana desde `lg` (con `aside` opcional).
+     - La tabla crece y hace scroll por dentro con `DataTableHead isSticky`, y los botones del panel quedan al fondo.
+     - Por debajo de `lg` se mantiene el scroll normal (zoom 200 %).
+  3. **Historial (`/ventas`):**
+     - Feature `sales-history` (DTOs Zod, mappers a céntimos, `listSalesSvc`/`getSaleDetailSvc`, `useSalesPage` con `keepPreviousData` y `useSaleDetail`).
+     - Tabla con `Badge` por estado y modal de detalle (`Modal size="lg"`). Paginación (molécula nueva `Pagination`) y `formatDateTime`.
+     - Cabecera común `SessionHeader` en `auth` con las pestañas Caja · Ventas (`NavLink`, `aria-current`); sustituye a `checkout-header`.
+     - Mocks MSW de `GET /sales` y `GET /sales/{id}` sobre las ventas en memoria.
+- **Fallos encontrados y corregidos:**
+  - El icono de "Anterior" salía encima del texto (los `svg` son bloque en Tailwind): la etiqueta del `Button` ahora es `inline-flex`.
+  - Ajustes de tests: el campo se vuelve a montar tras finalizar y hay que buscarlo de nuevo; el e2e esperaba al total antes de `F12`.
+- **Verificación:**
+  - 149 unit (88 % de cobertura en líneas y 83,5 % en ramas), 30 de integración y 8 e2e `mocked` (dos ejecuciones).
+  - 4 `full-stack` contra el **back nuevo arrancado en el 8081**: el del 8080 del IDE del autor tiene el código anterior y no se tocó.
+  - Capturas revisadas (altura completa, aviso, historial y detalle). GIF del README regenerado.
+- **Docs:** `CLAUDE.md`, `02` (CU-04 y CU-09 nuevo), `03` (layout y componentes), `04`, `06`, roadmap y README.
+- **Decisiones / correcciones humanas:** Las tres mejoras las pidió el autor.
+- **Resultado:** Sin commit. Orden de subida: primero el back (el CI del front prueba contra la imagen de `main` del back), después el front.
+
+### #20 · 2026-10-29 21:57 · Responsive en móvil
+- **Prompt (resumen):** "Falta ajustar bien el responsive; en móvil se ve un poco mal, creo que el header".
+- **Qué hizo la IA:**
+  - **Cabecera:**
+    - `AppHeader` pasa a dos filas en móvil: marca y sesión arriba, pestañas a lo ancho debajo.
+    - El contexto solo se ve desde `lg`.
+    - `UserBadge` muestra el nombre desde `md` (`sr-only` antes) y el avatar desde `sm`.
+  - **Caja:**
+    - Las filas de `SaleTable` se apilan por debajo de `md`: nombre y precio unitario en una línea; stepper, importe y papelera en otra.
+    - `QuantityStepper` es más compacto en móvil.
+    - `ScanForm` pasa a una columna y la barra de atajos se oculta por debajo de `md`.
+  - **Historial:**
+    - Filas apiladas en `SalesTable`.
+    - `Pagination` en rejilla de dos botones.
+    - El modal oculta el precio unitario por debajo de `sm`.
+  - **Tipografía:** el título y el total grande (`Money size="total"`) bajan un paso por debajo de `sm`.
+- **Fallos encontrados y corregidos:**
+  - A 320 px la papelera bajaba a una tercera línea con 999 unidades.
+  - El total de cuatro cifras se salía de la tarjeta.
+  - Las dos cosas se midieron con Playwright (iPhone SE e iPhone 13) y se corrigieron ajustando los rellenos y los tamaños.
+- **Verificación:**
+  - Sin scroll horizontal a 320, 390, 768 y 1366 px. Capturas revisadas.
+  - 149 unit (88,3 % de líneas), 30 de integración y 8 e2e `mocked` con axe; formato, lint y tipos en verde.
+  - El e2e `full-stack` no se repitió: el cambio es solo de CSS y la CI lo pasará en la PR.
+- **Docs:** `03` (§2.1 Móvil y tablet) y roadmap.
+- **Decisiones / correcciones humanas:** Lo pidió el autor.
+- **Resultado:** Sin commit; va en la misma rama `feature/history-and-full-height`.
+

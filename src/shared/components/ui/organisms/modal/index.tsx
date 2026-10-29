@@ -20,6 +20,8 @@ export interface ModalProps {
   variant?: 'default' | 'destructive';
   /** While an action runs ("Finalizando…") Esc does not close the dialog. */
   isBusy?: boolean;
+  /** `md` for confirmations (32 rem), `lg` for content such as a table of lines (48 rem). */
+  size?: 'md' | 'lg';
 }
 
 /**
@@ -40,6 +42,7 @@ export const Modal = ({
   actions,
   variant = 'default',
   isBusy = false,
+  size = 'md',
 }: ModalProps) => {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -72,7 +75,8 @@ export const Modal = ({
       onKeyDown={handleKeyDown}
       onCancel={(event) => event.preventDefault()}
       className={cn(
-        'm-auto w-full max-w-lg rounded-modal bg-surface p-8 text-ink shadow-modal',
+        'm-auto w-full rounded-modal bg-surface p-5 text-ink shadow-modal sm:p-8',
+        size === 'lg' ? 'max-w-3xl' : 'max-w-lg',
         'backdrop:bg-overlay',
       )}
     >

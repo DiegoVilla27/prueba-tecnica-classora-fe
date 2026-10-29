@@ -24,6 +24,8 @@ const useCheckoutScreen = () => {
   const announce = useAnnouncer();
 
   const [openModal, setOpenModal] = useState<OpenModal>(null);
+  /** Total of the sale just completed: shown above the new empty sale until the first scan. */
+  const [completedTotal, setCompletedTotal] = useState<number | null>(null);
   const sale = useSaleStore((state) => state.sale);
   const lines = useSaleStore(selectLines);
   const total = useSaleStore(selectTotal);
@@ -45,11 +47,18 @@ const useCheckoutScreen = () => {
     setOpenModal('finalize');
   };
 
+  /**
+   * CU-04: complete and go straight to a new empty sale (panel at 0, field focused). The total
+   * just charged stays visible in a notice. If opening the new sale fails, the completed sale
+   * stays on screen with its "Nueva venta" button as a fallback.
+   */
   const confirmFinalize = () =>
     completeSale.mutate(undefined, {
       onSuccess: () => {
         setOpenModal(null);
-        announce(CHECKOUT_TEXT.completed(total));
+        setCompletedTotal(total);
+        announce(CHECKOUT_TEXT.completedNext(total));
+        startNewSale.mutate(undefined, { onSuccess: focusScanInput });
       },
     });
 
@@ -124,6 +133,8 @@ const useCheckoutScreen = () => {
     isWorking,
     isCompleted,
     total,
+    // The notice of the last completed sale stays until the first scan of the new one.
+    completedTotal: isCompleted || lines.length === 0 ? completedTotal : null,
     openModal,
     closeModal,
     openFinalize,

@@ -15,6 +15,6 @@ describe('UI: Money', () => {
     // Assert
     const amount = screen.getByText(/14,94/);
     expect(amount).toHaveTextContent('14,94 €');
-    expect(amount).toHaveClass('tabular-nums', 'text-total');
+    expect(amount).toHaveClass('tabular-nums', 'text-[2.5rem]', 'sm:text-total');
   });
 });

@@ -10,8 +10,11 @@ const LoginScreen = lazy(() =>
 const CheckoutScreen = lazy(() =>
   import('@features/checkout').then((module) => ({ default: module.CheckoutScreen })),
 );
+const SalesHistoryScreen = lazy(() =>
+  import('@features/sales-history').then((module) => ({ default: module.SalesHistoryScreen })),
+);
 
-/** Route table: `/login` (public), `/` (private) and any other path back to `/`. */
+/** Route table: `/login` (public), `/` and `/ventas` (private), any other path back to `/`. */
 export const routes: RouteObject[] = [
   {
     element: <PublicGuard />,
@@ -19,7 +22,10 @@ export const routes: RouteObject[] = [
   },
   {
     element: <PrivateGuard />,
-    children: [{ path: '/', element: <CheckoutScreen /> }],
+    children: [
+      { path: '/', element: <CheckoutScreen /> },
+      { path: '/ventas', element: <SalesHistoryScreen /> },
+    ],
   },
   { path: '*', element: <Navigate to="/" replace /> },
 ];

@@ -234,24 +234,50 @@ describe('Checkout: Screen Integration', () => {
     expect(screen.getByText('Escanea un producto para empezar')).toBeInTheDocument();
   });
 
-  it('I-09: should complete the sale, show the success and start a new empty sale', async () => {
+  it('I-09: should complete the sale and open a new empty one, keeping the paid total visible', async () => {
     // Arrange
     seedOpenSale([[MILK.code, 1]]);
     const { user } = await openCheckout();
     await waitFor(() => expect(rows()).toHaveLength(1));
 
     // Act
-    await user.click(screen.getByRole('button', { name: /Finalizar venta/ }));
+    await user.click(screen.getByRole('button', { name: 'Finalizar venta' }));
     const dialog = await screen.findByRole('dialog', { name: '¿Finalizar esta venta?' });
     await user.click(within(dialog).getByRole('button', { name: 'Finalizar venta' }));
-    expect(euros((await screen.findByText(/Venta finalizada ·/)).textContent ?? '')).toBe(
-      'Venta finalizada · 0,95 €',
+
+    // Assert: new empty sale, panel at 0, notice with the paid total, field ready
+    expect(await screen.findByText('Escanea un producto para empezar')).toBeInTheDocument();
+    expect(totalText()).toBe('0,00 €');
+    const notice = screen.getByText(/Venta finalizada ·/, { selector: '[role="status"] p' });
+    expect(euros(notice.textContent ?? '')).toBe(
+      'Venta finalizada · 0,95 €. Ya puedes escanear la siguiente.',
     );
-    await user.click(screen.getByRole('button', { name: 'Nueva venta' }));
+    // The field is mounted again for the new sale: query it again
+    await waitFor(() =>
+      expect(screen.getByRole('textbox', { name: 'Código de producto' })).toHaveFocus(),
+    );
+
+    // The notice goes away with the first scan of the new sale
+    await scan(user, BAG.code);
+    await waitFor(() => expect(rows()).toHaveLength(1));
+    expect(screen.queryByText(/Venta finalizada ·/, { selector: '[role="status"] p' })).toBeNull();
+  });
+
+  it('should keep the completed sale with "Nueva venta" when the next sale cannot be opened', async () => {
+    // Arrange
+    seedOpenSale([[MILK.code, 1]]);
+    const { user } = await openCheckout();
+    await waitFor(() => expect(rows()).toHaveLength(1));
+    server.use(http.post(api('/sales'), () => HttpResponse.error(), { once: true }));
+
+    // Act
+    await user.click(screen.getByRole('button', { name: 'Finalizar venta' }));
+    const dialog = await screen.findByRole('dialog', { name: '¿Finalizar esta venta?' });
+    await user.click(within(dialog).getByRole('button', { name: 'Finalizar venta' }));
+    await user.click(await screen.findByRole('button', { name: 'Nueva venta' }));
 
     // Assert
     expect(await screen.findByText('Escanea un producto para empezar')).toBeInTheDocument();
-    expect(totalText()).toBe('0,00 €');
   });
 
   it('I-10: should empty the sale after the destructive confirmation', async () => {

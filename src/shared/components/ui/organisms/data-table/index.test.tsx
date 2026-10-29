@@ -21,7 +21,7 @@ describe('UI: DataTable', () => {
     // Act
     const { container } = render(
       <DataTable caption={caption}>
-        <DataTableHead>
+        <DataTableHead isSticky>
           <tr>
             <DataTableHeaderCell>Producto</DataTableHeaderCell>
             <DataTableHeaderCell align="right">Importe</DataTableHeaderCell>
@@ -43,6 +43,7 @@ describe('UI: DataTable', () => {
     // Assert
     expect(screen.getByRole('table', { name: caption })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Importe' })).toHaveClass('text-right');
+    expect(screen.getAllByRole('rowgroup')[0]).toHaveClass('sticky', 'top-0');
     const [, highlighted, selected] = screen.getAllByRole('row');
     expect(highlighted).toHaveClass('bg-primary-subtle');
     expect(selected).toHaveAttribute('aria-selected', 'true');
