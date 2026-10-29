@@ -61,21 +61,18 @@ export { getProductByCodeSvc };
 
 ## 6. Hook — `hooks/use-xxx/index.ts` (default) — skill `react-tanstack-query`
 - Lecturas: `useQuery`/`fetchQuery` con `queryKey: ['<recurso>', params]`, `staleTime` justificado, sin `retry` en 4xx.
-- Escrituras sobre la venta: `useMutation` **optimista** con `scope: { id: 'sale' }`:
+- Escrituras sobre la venta: `useMutation` **optimista** con `mutationKey: ['sale']` y `scope: { id: 'sale' }` (patrón real en `checkout/hooks/use-sale-mutations`):
 ```ts
-const updateLine = useMutation({
+const changeQuantity = useMutation({
+  mutationKey: ['sale'],
   scope: { id: 'sale' },
-  mutationFn: ({ lineId, quantity }) => updateLineSvc(saleId, lineId, { quantity }),
-  onMutate: ({ lineId, quantity }) => {
-    const snapshot = useSaleStore.getState().sale;
-    useSaleStore.getState().applyOptimistic((s) => changeLineQuantity(s, lineId, quantity));
-    return { snapshot };
-  },
-  onSuccess: (sale) => useSaleStore.getState().setSale(sale),
-  onError: (error, _vars, ctx) => {
-    useSaleStore.getState().rollback(ctx?.snapshot ?? null);
-    // mostrar error (inline o toast según el caso)
-  },
+  // la línea se identifica por producto: el id real sale de serverSale cuando corre la petición
+  mutationFn: ({ productId, quantity }) =>
+    updateLineSvc(confirmedSaleId(), confirmedLineId(productId), { quantity }),
+  onMutate: ({ productId, quantity }) =>
+    store().applyOptimistic((s) => changeLineQuantity(s, lineIdOnScreen(s, productId), quantity)),
+  onSuccess: (sale) => store().confirmSale(sale, queryClient.isMutating({ mutationKey: ['sale'] }) <= 1),
+  onError: () => store().rollback(), // la pantalla muestra el error (inline o toast)
 });
 ```
 - Acciones irreversibles (finalizar, cancelar) **sin** `onMutate`: se espera la respuesta.

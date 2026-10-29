@@ -25,12 +25,12 @@
 - [x] Adelantado del hito 4 lo que necesita el login: átomos `Button`, `Input`, `Label`, `Logo`, `Overline`, `Spinner`; moléculas `FormField`, `PasswordField`, `Alert`; plantilla `AuthLayout` (con tests y `axe`).
 - [x] E2E `login` en `mocked` y `full-stack` (contra la API real).
 
-## Hito 3 · Dominio, store y servicios de venta — ~3 h (TDD)
-- [ ] `checkout/models` + unit.
-- [ ] `checkout/store` (Zustand) + unit.
-- [ ] `checkout/services` + DTOs + mapper + handlers MSW (venta en memoria).
-- [ ] `use-current-sale`, `use-sale-mutations` (optimistas, `scope`).
-- [ ] `catalog` completo (services, mapper, `use-product-lookup`, mocks).
+## Hito 3 · Dominio, store y servicios de venta ✅ (TDD)
+- [x] `checkout/models` (money, quantity, sale-line, sale) con los tests escritos primero; mismas reglas que el agregado del back.
+- [x] `checkout/store` (Zustand): `sale` + `serverSale` + estado de UI, `confirmSale` según la cola, `rollback` a la venta confirmada, selectores.
+- [x] `checkout/services` (7 endpoints, 409 al abrir → venta existente) + DTOs Zod + mapper + venta en memoria en MSW con las reglas del back.
+- [x] `use-current-sale` (reintentos de arranque en frío) y `use-sale-mutations` (optimistas, `scope`, líneas por producto, solo la última respuesta pinta).
+- [x] `catalog` completo (service con `ProductNotFoundError`, mapper, `use-product-lookup` con caché de 5 min, mocks con los 20 EAN-13 de la V3).
 
 ## Hito 4 · Design system (Atomic Design) — ~3 h
 - [ ] Tokens y tipografía de `docs/03-ux-ui.md` §4 en el `@theme` (Inter Variable autoalojada).

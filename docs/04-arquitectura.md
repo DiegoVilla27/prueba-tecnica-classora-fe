@@ -82,7 +82,7 @@ src/
 │   │   │   └── index.ts
 │   │   └── index.ts                            # barrel raíz: export * from './atoms' …
 │   ├── hooks/{use-hotkeys, use-announcer}/index.ts(x)
-│   ├── utils/{cn, format-money, storage}/index.ts
+│   ├── utils/{cn, format-money, money, storage}/index.ts   # money: fromEuros (euros → céntimos)
 │   ├── mocks/
 │   │   ├── server/index.ts                     # setupServer para tests
 │   │   └── data/index.ts                       # usuarios demo, tokens falsos
@@ -108,23 +108,23 @@ src/
 │   │   ├── index.ts                            # export { useProductLookup, type Product, ProductNotFoundError }
 │   │   ├── models/product/index.ts
 │   │   ├── errors/product-not-found/index.ts
-│   │   ├── hooks/use-product-lookup/index.ts   # queryClient.fetchQuery con caché por código
+│   │   ├── hooks/use-product-lookup/index.ts   # queryClient.fetchQuery, caché de 5 min por código, sin reintentos
 │   │   ├── services/{index.ts, dtos/response/index.ts, mappers/index.ts}
-│   │   └── mocks/{data,handlers}/index.ts
+│   │   └── mocks/{data,handlers}/index.ts      # los 20 productos EAN-13 de la V3 del back
 │   └── checkout/
 │       ├── index.ts                            # export { CheckoutScreen }
 │       ├── constants/{limits,messages}/index.ts
 │       ├── models/{money, quantity, sale-line, sale}/index.ts
-│       ├── store/index.ts                      # useSaleStore + selectores + initialSaleState
+│       ├── store/index.ts                      # useSaleStore (sale + serverSale + UI) + selectores + initialSaleState
 │       ├── services/
 │       │   ├── index.ts                        # openSaleSvc, getCurrentSaleSvc, addLineSvc, updateLineSvc,
 │       │   │                                   # removeLineSvc, completeSaleSvc, cancelSaleSvc
 │       │   ├── dtos/{request,response}/index.ts
 │       │   └── mappers/index.ts                # toSale(dto): euros → céntimos
 │       ├── hooks/
-│       │   ├── use-current-sale/index.ts       # GET current → si 404, POST /sales → store
-│       │   └── use-sale-mutations/index.ts     # add/update/remove/complete/cancel optimistas
-│       ├── mocks/{data,handlers}/index.ts      # venta en memoria para MSW
+│       │   ├── use-current-sale/index.ts       # GET current → si 404, POST /sales → store; reintentos de arranque en frío
+│       │   └── use-sale-mutations/index.ts     # addProduct/changeQuantity/removeProduct/undoRemove optimistas · completeSale/startNewSale/cancelSale
+│       ├── mocks/{data,handlers}/index.ts      # venta en memoria con las reglas del agregado del back (reset en setupTests)
 │       └── screen/
 │           ├── index.tsx                       # CheckoutScreen
 │           ├── index.integration.test.tsx
@@ -144,11 +144,13 @@ e2e/
 ## 4. Dominio en el front
 
 ```ts
-// models/money        type Money = number (céntimos) · add · multiply
-// models/quantity     MIN_QUANTITY · MAX_QUANTITY · clampQuantity · isValidQuantity
+// models/money        type Money = number (céntimos) · addMoney · multiplyMoney
+//                     (euros → céntimos: fromEuros de @shared/utils/money, solo en mappers)
+// models/quantity     isValidQuantity (1–999) · InvalidQuantityError
 // models/sale-line    { id, productId, code, name, unitPrice: Money, quantity } · lineSubtotal
 // models/sale         { id, status, version, lines }
-//                     addProductToSale · changeLineQuantity · removeLine · restoreLine · saleTotal · itemCount
+//                     addProductToSale (MaxQuantityExceededError si pasa de 999) · changeLineQuantity
+//                     removeLine · restoreLine (al final) · saleTotal · itemCount · lineCount · canCompleteSale
 ```
 Son las **mismas reglas** que el agregado del back, en funciones puras, para el **feedback optimista**. La respuesta del servidor manda siempre.
 
@@ -156,26 +158,30 @@ Son las **mismas reglas** que el agregado del back, en funciones puras, para el 
 
 ```ts
 interface SaleState {
-  sale: Sale | null;              // null mientras se carga/abre la venta
+  sale: Sale | null;              // lo que se ve: servidor + cambios optimistas en curso
+  serverSale: Sale | null;        // última venta confirmada (ids reales, destino del rollback)
   lastAddedCode: string | null;   // resaltar + scroll
   selectedLineId: string | null;  // navegación ↑↓
   lastRemoved: RemovedLine | null;// deshacer
 }
-// acciones: setSale, applyOptimistic(fn), rollback(snapshot), selectLine, markAdded, reset
+// acciones: setSale, confirmSale(sale, isLastInQueue), applyOptimistic(fn), rollback(), selectLine,
+//           markAdded, setLastRemoved, reset · selectores: selectLines, selectTotal, selectItemCount,
+//           selectLineCount, selectCanComplete
 ```
 
 ```ts
 // hooks/use-sale-mutations (extracto)
-const addLine = useMutation({
-  scope: { id: 'sale' },                                   // serializa con el resto de mutaciones
-  mutationFn: ({ product, quantity }) => addLineSvc(saleId, { code: product.code, quantity }),
-  onMutate: ({ product, quantity }) => {
-    const snapshot = useSaleStore.getState().sale;
-    useSaleStore.getState().applyOptimistic((s) => addProductToSale(s, product, quantity));
-    return { snapshot };
+const addProduct = useMutation({
+  mutationKey: ['sale'],                                   // para contar las que hay en cola
+  scope: { id: 'sale' },                                   // las peticiones van en serie
+  mutationFn: ({ product, quantity }) =>
+    addLineSvc(confirmedSaleId(), { code: product.code, quantity }),
+  onMutate: ({ product, quantity }) => {                   // corre al instante
+    store().applyOptimistic((s) => addProductToSale(s, product, quantity)); // >999 lanza: sin petición
+    store().markAdded(product.code);
   },
-  onSuccess: (sale) => useSaleStore.getState().setSale(sale),       // reconciliación
-  onError: (_e, _v, ctx) => useSaleStore.getState().rollback(ctx?.snapshot),
+  onSuccess: (sale) => store().confirmSale(sale, isMutating(['sale']) <= 1), // solo la última pinta
+  onError: () => store().rollback(),                       // vuelve a la última venta confirmada
 });
 ```
 
@@ -184,12 +190,14 @@ const addLine = useMutation({
 | Escanear | `addProductToSale` | `POST /sales/{id}/lines` | venta del servidor |
 | Cambiar cantidad | `changeLineQuantity` | `PATCH …/lines/{lineId}` | ídem |
 | Eliminar | `removeLine` (+ guarda `lastRemoved`) | `DELETE …/lines/{lineId}` | ídem |
-| Deshacer | `restoreLine` | `POST …/lines` con código y cantidad | ídem |
+| Deshacer | `restoreLine` (al final, como la API) | `POST …/lines` con código y cantidad | ídem |
 | Finalizar | — (espera respuesta) | `PATCH …/complete` | pantalla de éxito → nueva venta |
 | Vaciar | — (espera respuesta) | `PATCH …/cancel` → `POST /sales` | venta nueva |
 
 - **¿Por qué Zustand si el servidor es la fuente de verdad?** La venta en pantalla la leen varios componentes (formulario, tabla, total, atajos) y cambia en cada escaneo. Zustand da selecciones atómicas y un sitio claro para el estado optimista y de UI. TanStack Query se encarga del transporte, la serialización y los reintentos.
-- Finalizar y vaciar **no** son optimistas: son irreversibles y el cajero debe ver la confirmación real.
+- Finalizar y vaciar **no** son optimistas: son irreversibles y el cajero debe ver la confirmación real. Van en la misma cola, así que esperan a que terminen los escaneos pendientes.
+- **Escaneos rápidos**: `onMutate` corre al instante y las peticiones esperan su turno, así que una línea puede tener todavía un id temporal cuando el cajero pulsa `+`. Por eso las acciones identifican la línea por `productId` y el id real se resuelve con `serverSale` al salir la petición.
+- **Arranque en frío**: `use-current-sale` reintenta con espera creciente (1, 2, 4, 8, 10, 10 s) solo si no hay respuesta o es 5xx; `isConnecting` activa "Conectando con el servidor…".
 
 ## 6. Escaneo: lookup + línea
 

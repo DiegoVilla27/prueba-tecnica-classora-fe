@@ -44,7 +44,7 @@ Formato único (`ErrorResponseDTO`):
 - `core/interceptors/errors`: normaliza a `ApiError`, sin toasts globales.
 
 ## 4. Dinero
-El back envía decimales (`0.95`); los mappers los pasan a céntimos (`Math.round(x * 100)`). El front **nunca** envía precios: solo código y cantidad.
+El back envía decimales (`0.95`); los mappers los pasan a céntimos con `fromEuros` de `@shared/utils/money` (`Math.round(x * 100)`, un único sitio). El front **nunca** envía precios: solo código y cantidad.
 
 ## 5. Flujo completo de una venta
 1. Login → tokens en storage → `/`.

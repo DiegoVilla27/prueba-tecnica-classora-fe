@@ -188,3 +188,28 @@ Registro del uso de inteligencia artificial en el frontend. Es el entregable de 
 - **Docs:** `CLAUDE.md`, `02`, `03` (token `display`), `04`, `06`, skill `new-component` (sin `forwardRef`) y roadmap (hito 2 ✅; hito 4 con lo que queda).
 - **Decisiones / correcciones humanas:** Ninguna.
 - **Resultado:** `typecheck`, `lint` (0 avisos), `format:check`, unit, integración, `build:prod`, e2e `mocked` y `full-stack` en verde. Commit `feat(auth): add login screen, session hooks and first design system pieces` en `feature/hito-2-auth`, merge fast-forward a `main` y push.
+
+### #11 · 2026-10-29 15:30 · Hito 3: lógica de la venta (modelos, store, servicios, mutaciones)
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt (resumen):** Empezar el hito 3.
+- **Qué hizo la IA:**
+  - **Contrato:** comprobó contra el back local la forma exacta de `SaleResponseDTO`, el 422 al pasar de 999 y al cobrar vacía, el 404 del producto y el 204 al cancelar. Las ventas de prueba quedaron canceladas.
+  - **Modelos (TDD, tests primero):**
+    - `money` en céntimos, `quantity` (1–999) y `sale-line`;
+    - `sale`: añadir (suma si ya está; `MaxQuantityExceededError` sin tocar la venta), cambiar cantidad, quitar, deshacer, total, artículos, productos y `canCompleteSale`.
+  - **`catalog`:** `getProductByCodeSvc` (404 → `ProductNotFoundError`; los demás errores pasan tal cual para distinguir "no existe" de "sin conexión"), mapper y `useProductLookup` con caché de 5 min. Mocks generados desde la `V3` del back: los mismos 20 EAN-13, UUID y precios.
+  - **`checkout`:**
+    - 7 servicios (abrir con 409 → devuelve la venta existente) y DTOs Zod;
+    - mock MSW con una venta en memoria y las mismas reglas que el agregado del back;
+    - `useCurrentSale` con reintentos de arranque en frío solo para "sin respuesta" o 5xx;
+    - `useSaleMutations`.
+  - **Decisiones de diseño tras leer el código de TanStack Query** (con `scope`, `onMutate` corre al instante y solo la petición hace cola):
+    - las líneas se identifican por **producto**, y el id real se resuelve con `serverSale` cuando sale la petición; así funciona pulsar "+" antes de que responda el escaneo;
+    - solo la **última** respuesta de la cola pinta la pantalla (`confirmSale`); las anteriores actualizan `serverSale` y así no parpadean los cambios posteriores;
+    - el `rollback` vuelve a la última venta confirmada.
+  - **Deshacer:** la línea vuelve **al final**, porque es lo que hace la API (`POST /lines` añade al final) y así no salta la fila. Doc `02` corregido.
+  - **Euros a céntimos:** `fromEuros` pasa a `@shared/utils/money`, para que `catalog` y `checkout` no dependan uno del otro.
+  - **Tests:** 89 unitarios en verde, con un 94 % de cobertura en líneas y un 87 % en ramas. Incluyen escaneo, escaneo y cambio de cantidad antes de ninguna respuesta, >999 sin petición, 500 con rollback, eliminar con deshacer, cobrar y venta nueva, y vaciar.
+  - **Docs:** `CLAUDE.md` §3, `02`, `04` (store, extracto de mutación, árbol), `06`, skill `new-service` y roadmap (hito 3 ✅).
+- **Decisiones / correcciones humanas:** Ninguna.
+- **Resultado:** `typecheck`, `lint`, `format:check`, unit, integración, `build:prod` y e2e en verde. Commit `feat(checkout): add sale domain, store, services and optimistic mutations` en `feature/hito-3-sale-logic`, merge fast-forward a `main` y push.

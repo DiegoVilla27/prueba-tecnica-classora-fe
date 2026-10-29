@@ -169,11 +169,11 @@ Componente (pinta) → su hook (orquesta) → TanStack Query → xxxSvc → http
 
 ## 3. Estado con Zustand (venta) + TanStack Query (servidor)
 
-- El **servidor es la fuente de verdad** de la venta (precios, total). Zustand guarda la **copia local** (`sale` mapeada desde `SaleResponseDto`) más el estado de UI (`selectedLineId`, `lastAddedCode`, `lastRemoved`).
-- Cada acción del cajero es una **mutation** de TanStack Query con `scope: { id: 'sale' }` (se ejecutan en serie, respetando el orden de escaneo):
-  1. `onMutate`: guarda un *snapshot* y aplica el cambio optimista en el store con funciones puras de `models/` (feedback < 100 ms).
-  2. `onSuccess`: reemplaza `sale` por la respuesta mapeada (reconciliación).
-  3. `onError`: restaura el *snapshot* y muestra el error.
+- El **servidor es la fuente de verdad** de la venta (precios, total). Zustand guarda `sale` (lo que se ve: venta del servidor + cambios optimistas en curso), `serverSale` (la última venta confirmada) y el estado de UI (`selectedLineId`, `lastAddedCode`, `lastRemoved`).
+- Cada acción del cajero es una **mutation** de TanStack Query con `scope: { id: 'sale' }`: `onMutate` corre al instante, pero las **peticiones** van en serie, en el orden de las acciones:
+  1. `onMutate`: aplica el cambio optimista con funciones puras de `models/` (feedback < 100 ms). Las líneas se identifican por **producto**: las optimistas llevan un id temporal y el id real se resuelve con `serverSale` cuando sale la petición.
+  2. `onSuccess`: `confirmSale` guarda la respuesta en `serverSale` y solo la pinta si es la **última** mutación de la cola (si no, los cambios optimistas posteriores parpadearían).
+  3. `onError`: `rollback()` vuelve a `serverSale` y la pantalla muestra el error.
 - **La lógica de negocio vive en `models/`** (funciones puras); el store solo las llama y hace `set`.
 - Store en `store/index.ts` con `create<SaleStore>()(devtools(...))` (`devtools` solo en desarrollo).
 - **Selecciones atómicas**: `useSaleStore((s) => s.sale.lines)`, nunca el store entero. Derivados (total, nº artículos) como **selectores**.

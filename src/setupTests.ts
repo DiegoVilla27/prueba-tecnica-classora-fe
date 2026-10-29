@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom/vitest';
+import { resetMockSales } from '@features/checkout/mocks/data';
 import server from '@shared/mocks/server';
 import { cleanup } from '@testing-library/react';
 
@@ -12,6 +13,7 @@ beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
 afterEach(() => {
   cleanup();
   server.resetHandlers();
+  resetMockSales();
   localStorage.clear();
 });
 

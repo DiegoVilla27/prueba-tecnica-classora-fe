@@ -104,7 +104,7 @@ Cada CU indica qué piezas del código lo implementan y qué tests lo cubren.
 2. Toast "Leche entera eliminada · **Deshacer**" durante 5 s (`Ctrl+Z` también deshace).
 3. Foco al input de código.
 
-**Alternativo:** C1 · Deshacer → la línea vuelve **en su posición** con su cantidad y precio originales.
+**Alternativo:** C1 · Deshacer → la línea vuelve con su cantidad, **al final** de la lista: la API la vuelve a crear con `POST /sales/{id}/lines`, que siempre añade al final, y así la fila no salta cuando llega la respuesta. El precio es el del catálogo (fijo por migración, coincide con el original).
 
 **¿Por qué deshacer y no un modal de confirmación?** Eliminar es frecuente; un modal en cada borrado frena al cajero. Deshacer previene el error sin añadir fricción (patrón recomendado por NN/g para acciones frecuentes y reversibles).
 
