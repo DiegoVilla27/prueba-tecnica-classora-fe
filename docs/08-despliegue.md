@@ -48,6 +48,7 @@ Sistema completo en local: `global_postgres` (infra compartida) + `pos_api` (rep
 - Las variables `VITE_*` van en los `.env.<modo>` del repo (son públicas), no en Vercel.
 - Build: `vercel.json` elige `pnpm build:prod` o `pnpm build:dev` según `VERCEL_ENV`; output `dist`.
 - Una rama solo tiene despliegue tras un push posterior a conectar el proyecto (por eso `dev` aparece "No Deployment" hasta su primer merge).
+- **Deployment Protection**: Vercel protege por defecto con login (Vercel Authentication) todo lo que no es producción, incluido `dev` (redirige a `vercel.com/sso-api`). Se desactiva en Settings → Deployment Protection para que dev sea público.
 - `vercel.json`: *rewrite* SPA (`/(.*)` → `/index.html`) y cabeceras de seguridad (`Content-Security-Policy` con `connect-src` limitado a la API, `X-Content-Type-Options`, `Referrer-Policy`).
 
 ## 4. CI (GitHub Actions · `.github/workflows/ci.yml`, como task-manager-client)
