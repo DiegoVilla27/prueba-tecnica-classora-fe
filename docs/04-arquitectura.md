@@ -113,8 +113,8 @@ src/
 │   │   └── mocks/{data,handlers}/index.ts      # los 20 productos EAN-13 de la V3 del back
 │   └── checkout/
 │       ├── index.ts                            # export { CheckoutScreen }
-│       ├── constants/{limits,messages}/index.ts
-│       ├── models/{money, quantity, sale-line, sale}/index.ts
+│       ├── constants/{limits,messages,dom}/index.ts   # dom: SCAN_INPUT_ID + focusScanInput
+│       ├── models/{money, quantity, sale-line, sale, scan-input}/index.ts   # scan-input: parseScanInput (N*código)
 │       ├── store/index.ts                      # useSaleStore (sale + serverSale + UI) + selectores + initialSaleState
 │       ├── services/
 │       │   ├── index.ts                        # openSaleSvc, getCurrentSaleSvc, addLineSvc, updateLineSvc,
@@ -123,19 +123,19 @@ src/
 │       │   └── mappers/index.ts                # toSale(dto): euros → céntimos
 │       ├── hooks/
 │       │   ├── use-current-sale/index.ts       # GET current → si 404, POST /sales → store; reintentos de arranque en frío
-│       │   └── use-sale-mutations/index.ts     # addProduct/changeQuantity/removeProduct/undoRemove optimistas · completeSale/startNewSale/cancelSale
+│       │   ├── use-sale-mutations/index.ts     # addProduct/changeQuantity/removeProduct/undoRemove optimistas · completeSale/startNewSale/cancelSale
+│       │   └── use-line-actions/index.ts       # increase/decrease/remove (toast Deshacer)/undo: botones y teclado
 │       ├── mocks/{data,handlers}/index.ts      # venta en memoria con las reglas del agregado del back (reset en setupTests)
 │       └── screen/
 │           ├── index.tsx                       # CheckoutScreen
 │           ├── index.integration.test.tsx
-│           ├── hooks/index.ts                  # useCheckoutScreen: atajos, modales, foco
+│           ├── hooks/index.ts                  # useCheckoutScreen: carga, modales, foco y atajos (CU-06)
 │           └── components/
-│               ├── checkout-header/            # cajero + cerrar sesión
-│               ├── scan-form/                  # index.tsx · hooks/ · schema/
+│               ├── checkout-header/            # AppHeader + UserBadge + "Salir"
+│               ├── scan-form/                  # index.tsx · hooks/ (cola de escaneos) · schema/
 │               ├── sale-table/  sale-line-row/  total-panel/
-│               ├── finalize-sale-modal/  clear-sale-modal/  sale-completed/
-│               ├── server-status/              # "Conectando con el servidor…" (cold start)
-│               └── shortcuts-bar/
+│               ├── finalize-sale-modal/  clear-sale-modal/  logout-modal/  sale-completed/
+│               └── server-status/              # "Conectando con el servidor…" (cold start) / error + Reintentar
 e2e/
 ├── mocked/      # contra MSW (deterministas)
 └── full-stack/  # contra la API real (docker en CI)

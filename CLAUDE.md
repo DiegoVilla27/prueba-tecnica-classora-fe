@@ -186,7 +186,7 @@ Componente (pinta) → su hook (orquesta) → TanStack Query → xxxSvc → http
 - El schema vive en `schema/index.ts` junto al componente y es la **única** fuente de verdad de la validación (DRY): si hace falta validar fuera del form, se reutiliza el mismo schema con `safeParse`.
 - Mensajes de error del schema = microcopy de `constants/messages`.
 - Errores conectados por accesibilidad: `aria-invalid`, `aria-describedby` al id del mensaje, mensaje con `role="alert"`.
-- Tras enviar: `reset()` y `setFocus('code')` (el input de código nunca pierde el foco).
+- Tras enviar: `setValue('code', '')` + `clearErrors` y el foco sigue en el input de código. **Nunca `reset()`** en un formulario que sigue montado: desregistra los campos y cuenta con que `register()` devuelva un `ref` nuevo en el siguiente render, algo que el React Compiler memoiza; el campo deja de actualizarse (fallo real del escaneo rápido, cubierto por el e2e `checkout-happy-path`). `resetField` sí es seguro.
 
 ## 5. Estilos con Tailwind v4
 

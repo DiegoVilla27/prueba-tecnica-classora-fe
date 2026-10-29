@@ -32,7 +32,8 @@ export const Input = ({
         'w-full rounded-control border bg-surface px-4 text-ink placeholder:text-ink-subtle',
         'focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-focus',
         'disabled:cursor-not-allowed disabled:bg-canvas disabled:text-ink-subtle',
-        invalid ? 'border-danger' : 'border-border-strong',
+        // With an error the focus ring turns red too (Figma frames 04/05): still a visible focus.
+        invalid ? 'border-danger focus-visible:ring-danger' : 'border-border-strong',
         endSlot ? 'pr-28' : undefined,
         sizes[size],
         className,

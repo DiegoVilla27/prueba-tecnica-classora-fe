@@ -11,7 +11,10 @@ export interface ModalProps {
   title: string;
   description?: ReactNode;
   children?: ReactNode;
-  /** Buttons at the bottom (secondary first, main action last). Put `autoFocus` on the safe one. */
+  /**
+   * Buttons at the bottom (secondary first, main action last). Mark the one that must get the
+   * focus with `data-autofocus` (React's `autoFocus` runs before `showModal()` and is lost).
+   */
   actions: ReactNode;
   /** `destructive` is announced as an `alertdialog` (irreversible action). */
   variant?: 'default' | 'destructive';
@@ -45,7 +48,11 @@ export const Modal = ({
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
-    if (isOpen && !dialog.open) dialog.showModal();
+    if (isOpen && !dialog.open) {
+      dialog.showModal();
+      // showModal() focuses the first focusable element; honour the one the caller chose.
+      dialog.querySelector<HTMLElement>('[data-autofocus]')?.focus();
+    }
     if (!isOpen && dialog.open) dialog.close();
   }, [isOpen]);
 

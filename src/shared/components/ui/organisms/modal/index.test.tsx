@@ -18,7 +18,9 @@ const renderModal = (props: Partial<ModalProps> = {}) =>
       actions={
         <>
           <button type="button">Volver a la venta</button>
-          <button type="button">Finalizar venta</button>
+          <button type="button" data-autofocus>
+            Finalizar venta
+          </button>
         </>
       }
       {...props}
@@ -82,5 +84,16 @@ describe('UI: Modal', () => {
 
     // Assert
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('should focus the action marked with data-autofocus when it opens', () => {
+    // Arrange
+    const props = {};
+
+    // Act
+    renderModal(props);
+
+    // Assert
+    expect(screen.getByRole('button', { name: 'Finalizar venta' })).toHaveFocus();
   });
 });

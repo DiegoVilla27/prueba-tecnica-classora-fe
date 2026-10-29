@@ -69,4 +69,21 @@ describe('Shared: useHotkeys', () => {
     // Assert
     expect(finalize).not.toHaveBeenCalled();
   });
+
+  it('should let the key through when the handler says it does not apply', async () => {
+    // Arrange
+    const user = userEvent.setup();
+    const removeSelected = vi.fn(() => false);
+    render(
+      <Harness hotkeys={[{ combo: 'Delete', handler: removeSelected, allowInInputs: true }]} />,
+    );
+    await user.type(screen.getByRole('textbox'), '84123');
+
+    // Act
+    await user.keyboard('{ArrowLeft}{Delete}');
+
+    // Assert
+    expect(removeSelected).toHaveBeenCalledOnce();
+    expect(screen.getByRole('textbox')).toHaveValue('8412');
+  });
 });

@@ -1,6 +1,11 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const isCI = Boolean(process.env.CI);
+/**
+ * Against the real API every test signs in as the same cashier, who can only have one open
+ * sale: those tests must run one at a time.
+ */
+const isFullStack = Boolean(process.env.E2E_FULL_STACK);
 
 /**
  * Two projects (docs/05-testing.md §5):
@@ -9,7 +14,8 @@ const isCI = Boolean(process.env.CI);
  */
 export default defineConfig({
   testDir: './e2e',
-  fullyParallel: true,
+  fullyParallel: !isFullStack,
+  workers: isFullStack ? 1 : undefined,
   forbidOnly: isCI,
   retries: isCI ? 1 : 0,
   reporter: isCI ? [['github'], ['html', { open: 'never' }]] : 'list',
@@ -32,7 +38,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: process.env.E2E_FULL_STACK ? 'pnpm local' : 'pnpm local:mock',
+    command: isFullStack ? 'pnpm local' : 'pnpm local:mock',
     url: 'http://localhost:3000',
     reuseExistingServer: !isCI,
     timeout: 60_000,

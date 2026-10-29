@@ -238,3 +238,39 @@ Registro del uso de inteligencia artificial en el frontend. Es el entregable de 
   - **Docs:** `03` §5 (variantes reales, `Modal` nativo, `Toast`) y §7, roadmap (hito 4 ✅).
 - **Decisiones / correcciones humanas:** Ninguna.
 - **Resultado:** 115 unitarios (95 % de cobertura en líneas y 90 % en ramas), integración, `build:prod`, e2e `mocked` y `full-stack` en verde. Commit `feat(ui): complete the design system with atomic design` en `feature/hito-4-design-system`, merge fast-forward a `main` y push.
+
+### #13 · 2026-10-29 18:30 · Hito 5: pantalla de caja completa
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt (resumen):** Empezar el hito 5.
+- **Qué hizo la IA:**
+  - **Componentes de la caja:**
+    - `ScanForm`: `parseScanInput` con el multiplicador `N*código`; una cola de escaneos en orden; errores inline de código no válido, inexistente, sin conexión y máximo 999.
+    - `SaleTable`/`SaleLineRow`: la key es `productId`, porque la línea optimista cambia de id al confirmarse; resaltado y scroll del último añadido.
+    - `TotalPanel`, `ServerStatus`, `SaleCompleted`, `CheckoutHeader` y los modales de finalizar, vaciar y cerrar sesión.
+    - `useLineActions`: − / +, quitar con toast "Deshacer" y deshacer.
+    - `useCheckoutScreen`: carga, modales, foco y atajos.
+  - **`useHotkeys`:** un handler puede devolver `false` para que `+`, `-`, `Supr` o `Ctrl+Z` sigan escribiendo en el campo cuando no hay línea seleccionada.
+  - **409:** recarga la venta del servidor.
+  - **Decisiones:**
+    - `−` en cantidad 1 elimina con Deshacer, en lugar de preguntar (CU-02 B1).
+    - No hay edición directa del número de cantidad (YAGNI).
+    - La pantalla de éxito espera a "Nueva venta".
+- **Fallos reales encontrados y corregidos:**
+  1. **Se perdían escaneos rápidos, detectado en la revisión visual con Chromium.**
+     - `reset()` de React Hook Form desregistra el campo y cuenta con que `register()` devuelva un `ref` nuevo en el siguiente render. El React Compiler lo memoiza, así que el campo dejaba de actualizarse.
+     - Se cambió por `setValue('', …)` + `clearErrors`; la regla queda en `CLAUDE.md` §4. jsdom no lo reproducía, así que lo cubre el e2e `checkout-happy-path` a velocidad de lector.
+  2. **`Enter` en el modal de finalizar cancelaba en vez de confirmar.** El `autoFocus` de React corre antes de `showModal()` y el diálogo enfocaba el primer botón. El `Modal` ahora enfoca el elemento marcado con `data-autofocus`.
+  3. **El campo de código no recibía el foco al cargar**, porque `autoFocus` no actúa sobre un campo deshabilitado. Ahora recibe el foco al habilitarse (I-01).
+  4. **Fidelidad con Figma:** "Deshacer" se partía en dos líneas, el toast tapaba la barra de atajos y el anillo azul ocultaba el borde rojo del error.
+- **Fallos del propio proceso de la IA:**
+  - Los scripts de capturas dejaban servidores de Vite vivos: `pkill -f "vite --mode mock"` nunca coincidía. Playwright reutilizaba el servidor de mock del puerto 3000, así que las ejecuciones `full-stack` posteriores a la captura del hito 2 (final del hito 2 y hitos 3 y 4) probablemente corrieron contra MSW.
+  - Se descubrió porque recuperar la venta tras recargar daba 0 filas; la venta ni existía en la BD.
+  - Se mataron los procesos y ahora se paran por puerto. Los `full-stack` van en serie (mismo cajero, una venta abierta), recargan solo con la red en reposo y se ejecutaron de verdad contra el back del 8080.
+- **Tests inestables corregidos:** el texto del toast también está en la región `aria-live`, así que se busca dentro del toast; `axe` excluye los toasts, que se medían a mitad de animación.
+- **Verificación:**
+  - 134 unitarios (88 % de cobertura en líneas y 83 % en ramas) y 25 de integración. Vitest completo pasó 5 veces seguidas.
+  - e2e `mocked` 7/7 (dos ejecuciones) y `full-stack` 4/4 contra la API real.
+  - Capturas comparadas con los frames 01, 04, 11, 13 y 16.
+- **Docs:** `CLAUDE.md` §4, `02` (A4, A6, A7, B1–B4, CU-04), `04` (árbol), `05` (e2e) y roadmap (hito 5 ✅, e2e del hito 6 adelantados).
+- **Decisiones / correcciones humanas:** Ninguna.
+- **Resultado:** Commit `feat(checkout): add the checkout screen with scan queue, modals and shortcuts` en `feature/hito-5-checkout-screen`, merge fast-forward a `main` y push.

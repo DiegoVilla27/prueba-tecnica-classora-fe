@@ -38,15 +38,15 @@
 - [x] Regla `no-restricted-imports` que impide importar de un nivel superior (hito 1).
 - [x] `use-hotkeys` (`useEffectEvent`, respeta los campos de texto), `use-announcer` (una región `aria-live` para toda la app), `cn`, `format-money`.
 
-## Hito 5 · Screen de caja — ~5 h
-- [ ] checkout-header (cajero + cerrar sesión) · server-status.
-- [ ] scan-form — CU-01 · sale-table / sale-line-row — CU-02, CU-03.
-- [ ] total-panel + finalize-sale-modal + sale-completed — CU-04.
-- [ ] clear-sale-modal — CU-05 · shortcuts-bar + atajos — CU-06.
-- [ ] Integración I-01…I-12.
+## Hito 5 · Screen de caja ✅
+- [x] checkout-header (cajero + "Salir" con confirmación si hay productos, CU-07) · server-status (arranque en frío / error + Reintentar).
+- [x] scan-form — CU-01 (multiplicador `N*código`, cola de escaneos en orden, errores inline) · sale-table / sale-line-row — CU-02, CU-03 (− en 1 elimina con Deshacer).
+- [x] total-panel + finalize-sale-modal + sale-completed — CU-04.
+- [x] clear-sale-modal — CU-05 · barra de atajos + `F12`, `↑↓`, `+`/`-`, `Supr`, `Ctrl+Z`, `Esc` — CU-06.
+- [x] Integración I-01…I-12 + alternativos (17 tests) y e2e de la caja en `mocked` (4) y `full-stack` (2).
 
 ## Hito 6 · E2E, accesibilidad y calidad — ~2 h
-- [ ] Specs Playwright (`mocked` y `full-stack`) + axe.
+- [x] Specs Playwright (`mocked` y `full-stack`) + axe (adelantado en los hitos 2 y 5).
 - [ ] Revisión manual: solo teclado + VoiceOver.
 - [ ] Fidelidad Figma vs app (capturas).
 

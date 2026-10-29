@@ -113,6 +113,8 @@ Dos proyectos en `playwright.config.ts`:
 | `checkout-happy-path` | Login → escanear 3 productos (uno repetido) → total → F12 → confirmar → venta nueva | ✅ | ✅ |
 | `checkout-unknown-code` | Código inexistente → mensaje → corregir → añadido | ✅ | ✅ |
 | `checkout-remove-undo` | Añadir → eliminar → Deshacer | ✅ | — |
+
+> `checkout-happy-path` escanea a la velocidad de un lector (sin pausas): así se detectó que `reset()` de React Hook Form + React Compiler perdía escaneos, algo que jsdom no reproducía. Los `full-stack` van en serie (`workers: 1`): todos usan el mismo cajero y el back solo admite una venta abierta por cajero.
 | `checkout-recover-sale` | Añadir productos → recargar → la venta sigue ahí | — | ✅ |
 | `checkout-keyboard-a11y` | Todo sin ratón + `AxeBuilder` sin violaciones `serious`/`critical` | ✅ | — |
 

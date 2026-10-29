@@ -6,6 +6,10 @@ import { cleanup } from '@testing-library/react';
 // axe-core probes <canvas>, which jsdom does not implement: answer "no context" quietly.
 HTMLCanvasElement.prototype.getContext = () => null;
 
+// jsdom has no pointer capture (used by sonner's swipe to dismiss).
+Element.prototype.setPointerCapture = () => undefined;
+Element.prototype.releasePointerCapture = () => undefined;
+
 // jsdom has no <dialog> modality: minimal showModal / close so the Modal can be tested.
 HTMLDialogElement.prototype.showModal = function showModal(this: HTMLDialogElement) {
   this.open = true;

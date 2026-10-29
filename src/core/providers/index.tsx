@@ -31,6 +31,8 @@ export const AppProviders = ({ children, queryClient = defaultQueryClient }: App
     {children}
     <Toaster
       position="bottom-left"
+      // Above the shortcuts bar, aligned with the work area (Figma frame 11).
+      offset={{ bottom: '4.5rem', left: '1.5rem' }}
       toastOptions={{
         unstyled: true,
         // Figma "Producto eliminado / Deshacer": inverse bar with a bold action on the right.
@@ -38,7 +40,7 @@ export const AppProviders = ({ children, queryClient = defaultQueryClient }: App
           toast:
             'flex w-full items-center justify-between gap-6 rounded-control bg-inverse px-4 py-3 text-sm text-on-primary shadow-modal',
           actionButton:
-            'rounded-control px-2 py-1 text-body font-semibold text-on-primary hover:underline focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-focus',
+            'shrink-0 whitespace-nowrap rounded-control px-2 py-1 text-body font-semibold text-on-primary hover:underline focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-focus',
         },
       }}
     />

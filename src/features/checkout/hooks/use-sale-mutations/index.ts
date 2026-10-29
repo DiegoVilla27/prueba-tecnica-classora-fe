@@ -1,3 +1,4 @@
+import { ApiError } from '@core/errors/api-error';
 import type { Product } from '@features/catalog';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -17,6 +18,7 @@ import {
   updateLineSvc,
 } from '../../services';
 import useSaleStore from '../../store';
+import { CURRENT_SALE_QUERY_KEY } from '../use-current-sale';
 
 /** Every sale mutation shares this key (to count them) and this scope (to run them in order). */
 export const SALE_MUTATION_KEY = ['sale'] as const;
@@ -66,7 +68,16 @@ const useSaleMutations = () => {
   /** Only the last queued response replaces the screen (see `confirmSale`). */
   const confirm = (sale: Sale) =>
     store().confirmSale(sale, queryClient.isMutating({ mutationKey: SALE_MUTATION_KEY }) <= 1);
-  const rollback = () => store().rollback();
+  /**
+   * Back to the last confirmed sale. A 409 means the sale changed elsewhere (another tab closed
+   * it): the open sale is loaded again from the server.
+   */
+  const rollback = (error: unknown) => {
+    store().rollback();
+    if (ApiError.from(error).status === 409) {
+      void queryClient.invalidateQueries({ queryKey: CURRENT_SALE_QUERY_KEY });
+    }
+  };
   const optimistic = {
     mutationKey: SALE_MUTATION_KEY,
     scope: SALE_SCOPE,

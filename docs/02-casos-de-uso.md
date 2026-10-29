@@ -62,10 +62,10 @@ Cada CU indica qué piezas del código lo implementan y qué tests lo cubren.
 | A1 · Input vacío | No hace nada (sin error, evita ruido por `Enter` accidental) |
 | A2 · Formato inválido (letras, < 4 dígitos) | Mensaje inline "Código no válido" bajo el input; texto seleccionado para reescribir; **no** se llama a la API |
 | A3 · Código inexistente (404) | Mensaje inline en rojo "No existe ningún producto con el código **1234**"; texto seleccionado; sonido/flash opcional |
-| A4 · Error de red / 5xx | Mensaje distinto: "No se pudo consultar el producto. Reintenta." + botón Reintentar. **No** se confunde con A3 |
+| A4 · Error de red / 5xx | Mensaje distinto: "No se pudo consultar el producto. Revisa la conexión y vuelve a pulsar Enter." El código se queda seleccionado: `Enter` reintenta. **No** se confunde con A3 |
 | A5 · Multiplicador `N*código` | Añade N unidades (1 ≤ N ≤ 999). `0*` o `N>999` → "Cantidad no válida" |
-| A6 · Superar 999 unidades al sumar | Se queda en 999 y avisa "Cantidad máxima alcanzada" |
-| A7 · Escaneo mientras hay petición en curso | Se encolan y se procesan en orden (no se pierden escaneos rápidos) |
+| A6 · Superar 999 unidades al sumar | No se añade nada (igual que el back, 422) y avisa "Cantidad máxima por producto: 999. No se añadieron más unidades." |
+| A7 · Escaneo mientras hay petición en curso | El campo se vacía al instante y los escaneos se procesan en cola, en orden (no se pierden escaneos rápidos; e2e `checkout-happy-path`) |
 
 **Postcondición:** la venta refleja el producto; el input vacío y con foco.
 
@@ -86,9 +86,9 @@ Cada CU indica qué piezas del código lo implementan y qué tests lo cubren.
 **Alternativos**
 | Caso | Respuesta |
 |---|---|
-| B1 · Pulsar − con cantidad 1 | Pregunta inline "¿Eliminar línea?" (Sí / No). Nunca se llega a 0 |
-| B2 · Escribir 0, vacío o no numérico | Al salir del campo / `Enter` se restaura el valor anterior y aviso "Cantidad entre 1 y 999" |
-| B3 · Escribir > 999 | Se limita a 999 con aviso |
+| B1 · Pulsar − con cantidad 1 | Elimina la línea con el toast "Deshacer" (como la papelera, CU-03): igual de seguro y sin frenar al cajero. Nunca se llega a 0 |
+| B2 / B3 · Escribir la cantidad | No se implementa (YAGNI): la cantidad se cambia con − / +, con `+` / `-` sobre la línea seleccionada o con el multiplicador `N*código` |
+| B4 · `+` en 999 | El botón está deshabilitado |
 
 **Implementación:** `shared/components/ui/molecules/quantity-stepper` · `useSaleStore.changeQuantity` · `models/quantity` (+ `QuantitySchema` Zod).
 **Tests:** unit (stepper, `changeLineQuantity`, store), integración (editar y comprobar total).
@@ -123,7 +123,7 @@ Cada CU indica qué piezas del código lo implementan y qué tests lo cubren.
 1. Se abre un modal con el resumen: nº de artículos, nº de líneas y **total**.
 2. Foco en **Confirmar**. `Enter` confirma, `Esc` cancela.
 3. Al confirmar: `PATCH /sales/{id}/complete` (no optimista; botón con estado de carga).
-4. Pantalla de éxito breve "Venta finalizada · 47,85 €" → `POST /sales` → venta nueva vacía con foco en el input.
+4. Pantalla de éxito "Venta finalizada · 47,85 €" con **Nueva venta** enfocado (`Enter`): espera al cajero, que quizá aún está cobrando → `POST /sales` → venta nueva vacía con foco en el input.
 
 **Alternativos:** D1 · Cancelar → vuelve a la venta sin cambios. D2 · Error del backend → se mantiene la venta y se muestra el error con reintento; **nunca** se pierde la venta.
 
