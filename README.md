@@ -113,7 +113,7 @@ Requisitos: Node 22 y pnpm 11 (`corepack enable`).
 pnpm install
 pnpm local:mock        # sin backend: la API la simula MSW en el navegador → http://localhost:3000
 pnpm local             # contra el back local en :8080 (ver repo del back)
-docker compose up --build -d   # build de producción servido con nginx en :3000 (red shared-network)
+docker compose up --build -d   # build de producción servido con nginx en :3000 (antes, el back con su propio docker compose up)
 ```
 
 | Script | Qué hace |
