@@ -33,7 +33,7 @@ Aplicación de **caja de supermercado** (React + TypeScript) usada de forma inte
 | Mock de red | MSW (Node en tests, Worker en dev/e2e) |
 | E2E | Playwright + `@axe-core/playwright` |
 | Calidad | oxlint (plugins `react`, `typescript`, `oxc`, `jsx-a11y`, `import` + reglas del React Compiler; las reglas de dependencia de §2.3 y §2.4 son errores de lint) · Prettier · Husky + lint-staged · commitlint (Conventional Commits) |
-| Entrega | Dockerfile (build + nginx) · `docker-compose.yml` en la red `shared-network` · Vercel (`dev` → preview, `main` → production) · GitHub Actions |
+| Entrega | Dockerfile (build + nginx) · `docker-compose.yml` autosuficiente (sin red externa) · Vercel (`dev` → preview, `main` → production) · GitHub Actions |
 
 > **No aplica** (es una SPA con Vite): Server Components, Server Actions, Redux. Si una skill copiada de task-manager los menciona, se ignora esa parte.
 

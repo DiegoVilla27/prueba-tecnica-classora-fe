@@ -6,7 +6,7 @@
 |---|---|---|
 | **local** | `pnpm local` (Vite, :3000) | back local `:8080` |
 | **local sin back** | `pnpm local:mock` | MSW en el navegador |
-| **docker** | `docker compose up --build -d` | back en contenedor (red `shared-network`) |
+| **docker** | `docker compose up --build -d` | back en contenedor (`docker compose up` del repo back) |
 | **dev** | Vercel, rama `dev` → https://classora-tpv-dev.vercel.app | Render `pos-api-dev` (`https://pos-api-dev-k0y9.onrender.com/api/v1`) |
 | **prod** | Vercel, rama `main` → https://classora-tpv-prod.vercel.app | Render `pos-api-prod` (`https://pos-api-prod.onrender.com/api/v1`) |
 
@@ -23,9 +23,6 @@ Archivos: `.env.localhost`, `.env.mock`, `.env.dev`, `.env.prod` y `.env.test` (
 `docker-compose.yml`:
 ```yaml
 name: classora-pos-web
-networks:
-  shared-network:
-    external: true
 services:
   pos-web:
     build:
@@ -36,10 +33,17 @@ services:
     restart: always
     ports:
       - "3000:3000"
-    networks:
-      - shared-network
 ```
-Sistema completo en local: `global_postgres` (infra compartida) + `pos_api` (repo back) + `pos_web` (este repo).
+Sistema completo en local, solo con Docker:
+
+```bash
+# en el repo del back: API + su propio PostgreSQL en :8080
+docker compose up --build -d
+# en este repo: la web en :3000
+docker compose up --build -d
+```
+
+Abre `http://localhost:3000` y entra con `cajero@pos.local` / `cajero1234`. No hace falta red compartida: el contenedor del front solo sirve archivos, y es el navegador quien llama a `localhost:8080`.
 
 ## 3. Vercel
 - Un proyecto conectado al repo de GitHub, con la variable `ENABLE_EXPERIMENTAL_COREPACK=1` para que Vercel use el pnpm de `packageManager` (11).
