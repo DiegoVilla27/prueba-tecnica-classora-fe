@@ -24,7 +24,34 @@ Caja de supermercado para la prueba técnica de **Classora Technologies**: el ca
 
 > ⏳ La API usa el plan gratuito de Render: tras 15 min sin uso se duerme y **el primer acceso puede tardar ~50 s**. La app lo avisa ("No se pudo conectar con el servidor. Puede tardar hasta un minuto en arrancar…" en el login, "Conectando con el servidor…" en la caja): basta con reintentar.
 
-**Códigos para escanear** (catálogo de 20 productos EAN-13): `8412345000010` Leche · `8412345000027` Pan · `8412345000034` Huevos · `8412345000041` Aceite · `8412345000119` Bolsa. Con multiplicador: `6*8412345000010`. Uno inexistente: `0000`.
+**Códigos para escanear.** El catálogo tiene 20 productos con código EAN-13, los mismos en todos los entornos. Escribe o pega el código en el campo y pulsa `Enter`:
+
+| Código | Producto | Precio |
+| :-- | :-- | --: |
+| `8412345000010` | Leche entera 1L | 0,95 € |
+| `8412345000027` | Pan de molde integral 460g | 1,65 € |
+| `8412345000034` | Huevos frescos M (12 uds) | 2,79 € |
+| `8412345000041` | Aceite de oliva virgen extra 1L | 8,95 € |
+| `8412345000058` | Arroz redondo 1kg | 1,29 € |
+| `8412345000065` | Yogur natural (pack 4) | 1,15 € |
+| `8412345000072` | Café molido natural 250g | 3,49 € |
+| `8412345000089` | Agua mineral 1,5L | 0,45 € |
+| `8412345000096` | Tomate frito 400g | 0,89 € |
+| `8412345000102` | Detergente líquido 30 lavados | 6,75 € |
+| `8412345000119` | Bolsa de papel | 0,10 € |
+| `8412345000126` | Plátanos de Canarias 1kg | 2,19 € |
+| `8412345000133` | Macarrones 500g | 0,85 € |
+| `8412345000140` | Atún claro en aceite (pack 3) | 2,95 € |
+| `8412345000157` | Queso semicurado 250g | 3,25 € |
+| `8412345000164` | Jamón cocido extra 200g | 2,40 € |
+| `8412345000171` | Galletas María 800g | 1,99 € |
+| `8412345000188` | Zumo de naranja 1L | 1,49 € |
+| `8412345000195` | Papel higiénico doble capa (12 rollos) | 4,50 € |
+| `8412345000201` | Cerveza lata 33cl (pack 6) | 3,89 € |
+
+- **Varias unidades de golpe:** `cantidad*código`, por ejemplo `6*8412345000010` añade 6 leches.
+- **Mismo código otra vez:** suma 1 a la línea existente.
+- **Para ver los errores:** `0000` es un código que no existe (*"No existe ningún producto con el código 0000"*) y `abc` no es válido (*"Introduce entre 4 y 14 dígitos"*).
 
 **Historial**: pestaña **Ventas** de la cabecera (`/ventas`), con el detalle de cada venta.
 
