@@ -434,3 +434,11 @@ Registro del uso de inteligencia artificial en el frontend. Es el entregable de 
   - El contenedor del front no necesita hablar con el del back: es el navegador quien llama a `localhost:8080`.
 - **Decisiones / correcciones humanas:** El autor pidió cambiar solo los composes.
 - **Resultado:** `docker compose config` es válido. Probado con el back en contenedor: login, venta finalizada e historial desde `localhost:3000`; contenedores e imagen borrados después. Sin commit.
+
+### #22 · 2026-10-30 16:10 · Docs de Docker sin infraestructura del autor
+- **Prompt (resumen):** Actualizar los README con las nuevas instrucciones de Docker.
+- **Qué hizo la IA:**
+  - README, `docs/08-despliegue.md` y `CLAUDE.md` ya no mencionan `shared-network` ni `global_postgres`.
+  - El sistema completo se levanta con `docker compose up --build -d` en el back y luego en el front.
+- **Decisiones / correcciones humanas:** Lo pidió el autor.
+- **Resultado:** Solo documentación.
