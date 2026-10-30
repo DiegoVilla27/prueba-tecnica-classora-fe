@@ -453,3 +453,11 @@ Registro del uso de inteligencia artificial en el frontend. Es el entregable de 
   - `Ctrl+Z` explicado como "deshacer la última eliminación".
 - **Decisiones / correcciones humanas:** El autor pidió revisar y corregir. Lo de `Ctrl+Z` viene de que el autor no entendía el atajo.
 - **Resultado:** Solo documentación. Sin commit.
+
+### #24 · 2026-10-30 17:10 · Todos los códigos de producto en el README
+- **Prompt (resumen):** El README debe listar todos los códigos para escanear: "el que use el sistema no es adivino".
+- **Qué hizo la IA:**
+  - Tabla con los 20 productos (código, nombre y precio), generada desde el catálogo de los mocks, que coincide con la semilla del back (`V3`).
+  - Explicación del multiplicador, de cómo se suma la cantidad y de qué códigos usar para ver los errores, con sus mensajes reales.
+- **Decisiones / correcciones humanas:** Lo detectó el autor.
+- **Resultado:** Solo documentación. Sin commit.
