@@ -426,3 +426,11 @@ Registro del uso de inteligencia artificial en el frontend. Es el entregable de 
 - **Decisiones / correcciones humanas:** Lo pidió el autor.
 - **Resultado:** Sin commit; va en la misma rama `feature/history-and-full-height`.
 
+
+### #21 · 2026-10-30 15:44 · Docker sin red externa
+- **Prompt (resumen):** Que `docker compose up` funcione en cualquier máquina, no solo en la del autor.
+- **Qué hizo la IA:**
+  - Quitó la red externa `shared-network` del `docker-compose.yml`, que hacía fallar el arranque fuera de la máquina del autor.
+  - El contenedor del front no necesita hablar con el del back: es el navegador quien llama a `localhost:8080`.
+- **Decisiones / correcciones humanas:** El autor pidió cambiar solo los composes.
+- **Resultado:** `docker compose config` es válido. Probado con el back en contenedor: login, venta finalizada e historial desde `localhost:3000`; contenedores e imagen borrados después. Sin commit.

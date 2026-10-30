@@ -1,9 +1,5 @@
 name: classora-pos-web
 
-networks:
-  shared-network:
-    external: true
-
 services:
   pos-web:
     build:
@@ -14,5 +10,3 @@ services:
     restart: always
     ports:
       - '3000:3000'
-    networks:
-      - shared-network
