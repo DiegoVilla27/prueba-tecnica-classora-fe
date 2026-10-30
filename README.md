@@ -28,7 +28,7 @@ Caja de supermercado para la prueba técnica de **Classora Technologies**: el ca
 
 **Historial**: pestaña **Ventas** de la cabecera (`/ventas`), con el detalle de cada venta.
 
-**Atajos**: `Enter` añadir · `F12` finalizar · `↑ ↓` seleccionar línea · `+ -` cantidad · `Supr` eliminar · `Ctrl+Z` deshacer · `Esc` cerrar / deseleccionar.
+**Atajos**: `Enter` añadir · `F12` finalizar · `↑ ↓` seleccionar línea · `+ -` cantidad · `Supr` eliminar · `Ctrl+Z` (⌘Z en Mac) deshacer la última eliminación · `Esc` cerrar / deseleccionar.
 
 ---
 
@@ -86,7 +86,7 @@ En el back, esa petición recorre su arquitectura hexagonal: `ProductController`
 
 ## 🏗️ Arquitectura
 
-Modular **por features** (`auth`, `catalog`, `checkout`) con `core` transversal y `shared` reutilizable ([`docs/04-arquitectura.md`](docs/04-arquitectura.md)):
+Modular **por features** (`auth`, `catalog`, `checkout`, `sales-history`) con `core` transversal y `shared` reutilizable ([`docs/04-arquitectura.md`](docs/04-arquitectura.md)):
 
 ```
 src/
@@ -111,17 +111,27 @@ Requisitos: Node 22 y pnpm 11 (`corepack enable`).
 
 ```bash
 pnpm install
-pnpm local:mock        # sin backend: la API la simula MSW en el navegador → http://localhost:3000
-pnpm local             # contra el back local en :8080 (ver repo del back)
-docker compose up --build -d   # build de producción servido con nginx en :3000 (antes, el back con su propio docker compose up)
 ```
+
+Todas las formas de lanzarlo abren la app en **http://localhost:3000**:
+
+| Comando | API que usa | Cuándo usarlo |
+| :-- | :-- | :-- |
+| `pnpm local:mock` | MSW: un back simulado en el navegador | Probar el front sin back. Los datos viven en memoria y se pierden al recargar |
+| `pnpm local` | Back en `localhost:8080` (`./mvnw spring-boot:run` o `docker compose up` en el repo del back) | Desarrollo contra la API real |
+| `pnpm dev` | API de Render **dev** | Probar en local contra el entorno desplegado (su CORS acepta `localhost`) |
+| `docker compose up --build -d` | Back en `localhost:8080` (levántalo antes con su propio `docker compose up --build -d`) | Todo en contenedores: build de producción servido con nginx |
+
+> `pnpm prod` existe para completar los modos, pero en local no funciona: la API de prod solo acepta peticiones desde `classora-tpv-prod.vercel.app`.
 
 | Script | Qué hace |
 | :-- | :-- |
-| `pnpm typecheck` · `pnpm lint` · `pnpm format:check` | Tipos, oxlint (React Compiler, a11y, dependencias), Prettier |
-| `pnpm test:unit` · `pnpm test:integration` | Vitest: unitarios con cobertura ≥ 80 % · pantallas completas contra MSW |
-| `pnpm e2e` · `pnpm e2e:full-stack` | Playwright contra MSW · contra la API real (`pnpm local` + back en :8080) |
-| `pnpm build:prod` | Build de producción |
+| `pnpm typecheck` · `pnpm lint` · `pnpm format:check` · `pnpm format` | Tipos, oxlint (React Compiler, a11y, dependencias), comprobar formato · formatear con Prettier |
+| `pnpm test:unit` · `pnpm test:integration` · `pnpm test:watch` | Vitest: unitarios con cobertura ≥ 80 % · pantallas completas contra MSW · modo watch |
+| `pnpm e2e` · `pnpm e2e:full-stack` · `pnpm e2e:ui` | Playwright contra MSW · contra la API real (necesita el back en :8080) · modo visual |
+| `pnpm build:localhost` · `build:dev` · `build:prod` · `pnpm preview` | Build de cada entorno · servir el último build en :3000 |
+
+**E2E**: la primera vez instala los navegadores con `pnpm exec playwright install chromium`. Playwright arranca solo el front en el puerto 3000 (`local:mock` o `local`), así que ese puerto debe estar libre.
 
 ---
 

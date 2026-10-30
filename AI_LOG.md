@@ -442,3 +442,14 @@ Registro del uso de inteligencia artificial en el frontend. Es el entregable de 
   - El sistema completo se levanta con `docker compose up --build -d` en el back y luego en el front.
 - **Decisiones / correcciones humanas:** Lo pidió el autor.
 - **Resultado:** Solo documentación.
+
+### #23 · 2026-10-30 16:40 · Revisión del README
+- **Prompt (resumen):** ¿Están bien explicados en los README los entornos, los scripts y cómo lanzar? Corregir lo que falte.
+- **Qué hizo la IA:**
+  - Nueva tabla de formas de lanzar (`local:mock`, `local`, `dev`, Docker) con la API que usa cada una.
+  - Aviso de que `pnpm prod` no funciona en local por el CORS de prod.
+  - Scripts completos y paso previo de los e2e (`pnpm exec playwright install chromium`, puerto 3000 libre).
+  - `sales-history` en la lista de features.
+  - `Ctrl+Z` explicado como "deshacer la última eliminación".
+- **Decisiones / correcciones humanas:** El autor pidió revisar y corregir. Lo de `Ctrl+Z` viene de que el autor no entendía el atajo.
+- **Resultado:** Solo documentación. Sin commit.
